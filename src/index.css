@@ -8,20 +8,20 @@ All colors MUST be HSL. Premium gradients and luxury aesthetic.
 
 @layer base {
   :root {
-    /* Dubai Luxury Color Palette */
-    --background: 0 0% 100%;
-    --background-secondary: 210 40% 98%;
-    --foreground: 215 25% 27%;
+    /* Dubai Luxury Color Palette - Darker Theme */
+    --background: 215 25% 14%;
+    --background-secondary: 215 22% 16%;
+    --foreground: 210 40% 95%;
 
     /* Card System */
-    --card: 0 0% 100%;
-    --card-secondary: 210 40% 98%;
-    --card-premium: 220 15% 97%;
-    --card-foreground: 215 25% 27%;
+    --card: 215 22% 18%;
+    --card-secondary: 215 20% 20%;
+    --card-premium: 215 18% 22%;
+    --card-foreground: 210 40% 95%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover: 215 22% 18%;
+    --popover-foreground: 210 40% 95%;
 
     /* Primary - Deep Blue */
     --primary: 213 94% 68%;
@@ -55,23 +55,23 @@ All colors MUST be HSL. Premium gradients and luxury aesthetic.
     --danger-foreground: 0 0% 100%;
 
     /* Muted tones */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --muted-dark: 215 14% 34%;
+    --muted: 215 20% 25%;
+    --muted-foreground: 215 16% 65%;
+    --muted-dark: 215 14% 35%;
 
     /* Border and Input */
-    --border: 214 32% 91%;
-    --border-secondary: 220 14% 96%;
-    --input: 214 32% 91%;
+    --border: 215 20% 30%;
+    --border-secondary: 215 18% 32%;
+    --input: 215 20% 25%;
     --ring: 213 94% 68%;
 
-    /* Premium Gradients */
+    /* Premium Gradients - Darker */
     --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(185 84% 39%));
     --gradient-premium: linear-gradient(135deg, hsl(215 84% 46%), hsl(213 94% 68%));
     --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%), hsl(48 96% 53%));
     --gradient-success: linear-gradient(135deg, hsl(158 64% 52%), hsl(160 84% 39%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 40% 98%));
-    --gradient-hero: linear-gradient(135deg, hsl(215 84% 46%) 0%, hsl(213 94% 68%) 50%, hsl(185 84% 39%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(215 22% 18%), hsl(215 20% 20%));
+    --gradient-hero: linear-gradient(135deg, hsl(215 25% 14%) 0%, hsl(215 84% 46%) 50%, hsl(185 84% 39%) 100%);
 
     /* Premium Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(215 25% 27% / 0.05);

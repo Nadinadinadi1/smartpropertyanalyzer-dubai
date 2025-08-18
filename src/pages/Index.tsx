@@ -8,23 +8,32 @@ import PropertyAnalyzer from '@/components/PropertyAnalyzer';
 import InvestmentDashboard from '@/components/InvestmentDashboard';
 import InsightsPanel from '@/components/InsightsPanel';
 import SettingsPanel from '@/components/SettingsPanel';
+import FeedbackButton from '@/components/FeedbackButton';
 import dubaiHeroImage from '@/assets/dubai-skyline-hero.jpg';
 
 const queryClient = new QueryClient();
 
 interface PropertyData {
+  propertyStatus: 'ready' | 'off-plan';
   name: string;
   price: number;
+  priceInputMethod: 'slider' | 'manual';
   propertyType: string;
   area: string;
   downPayment: number;
   loanTerm: number;
   interestRate: number;
+  dldFeeIncluded: boolean;
   monthlyRent: number;
   vacancyRate: number;
   maintenanceRate: number;
   managementFee: number;
   insurance: number;
+  rentGrowth: number;
+  appreciationRate: number;
+  expenseInflation: number;
+  exitCapRate: number;
+  sellingCosts: number;
 }
 
 const Index = () => {
@@ -120,7 +129,7 @@ const Index = () => {
               <div className="absolute inset-0 bg-gradient-hero opacity-90" />
               <div className="relative h-full flex items-center justify-center text-white p-6">
                 <div className="text-center">
-                  <h1 className="text-2xl font-bold mb-2">Dubai Property Analyzer</h1>
+                  <h1 className="text-2xl font-bold mb-2">Smart Property Analyser Dubai</h1>
                   <p className="text-sm opacity-90">Professional investment analysis for Dubai real estate</p>
                 </div>
               </div>
@@ -134,6 +143,9 @@ const Index = () => {
 
           {/* Bottom Navigation */}
           <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          
+          {/* Feedback Button */}
+          <FeedbackButton />
         </div>
       </TooltipProvider>
     </QueryClientProvider>
