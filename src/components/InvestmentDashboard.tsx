@@ -293,22 +293,22 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6 pb-20">
       {/* Logo and Theme Toggle */}
-      <div className="absolute top-4 left-4 z-10">
+        <div className="absolute top-4 left-4 z-10">
         <button
           onClick={() => window.location.hash = '#analyze'}
           className="relative hover:scale-105 transition-transform duration-200"
         >
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          {/* BETA Badge */}
-          <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md border border-white">
-            BETA
-          </div>
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            {/* BETA Badge */}
+            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md border border-white">
+              BETA
+            </div>
         </button>
-      </div>
+          </div>
 
       {/* Theme Toggle - Top Right */}
       <div className="absolute top-4 right-4 z-10">
@@ -322,8 +322,8 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
           <Sun className="h-5 w-5 text-primary dark:hidden" />
           <Moon className="h-5 w-5 text-primary hidden dark:block" />
         </button>
-      </div>
-
+        </div>
+        
              {/* Header */}
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gradient-primary mb-3">Smart Property Analyzer Dubai</h1>
@@ -338,17 +338,17 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
             <Badge variant="secondary" className="text-sm px-3 py-1">📍 {propertyData.area}</Badge>
           )}
           <Badge variant="outline" className="text-sm px-3 py-1">
-            {propertyData.propertyStatus === 'ready' ? '🏠 Ready Property' : '🏗️ Off-Plan Property'}
-          </Badge>
+          {propertyData.propertyStatus === 'ready' ? '🏠 Ready Property' : '🏗️ Off-Plan Property'}
+        </Badge>
         </div>
       </div>
 
-             {/* Navigation Menu */}
-       <Card className="card-premium p-4 mb-4 sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
-         <div className="flex flex-wrap gap-2 justify-center">
+      {/* Navigation Menu */}
+      <Card className="card-premium p-4 mb-4 sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+        <div className="flex flex-wrap gap-2 justify-center">
            <div className="text-sm font-medium text-muted-foreground">📊 Property Analyses</div>
-         </div>
-       </Card>
+        </div>
+      </Card>
 
       {/* Year-by-Year Projection - MOVED UP (Feiten eerst) */}
       <Card className="card-premium p-6">
@@ -360,7 +360,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
               {propertyData.name && (
                 <p className="text-xs text-muted-foreground mt-1">{propertyData.name}</p>
               )}
-            </div>
+          </div>
           </div>
         </div>
         
@@ -650,13 +650,13 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
         <div className="absolute top-4 right-4">
           <Dialog>
             <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
+          <Button
+            variant="ghost"
+            size="sm"
                 className="h-8 w-8 p-0 text-white/80 hover:text-white hover:bg-white/20 rounded-full"
-              >
+          >
                 <Info className="h-4 w-4" />
-              </Button>
+          </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
@@ -670,62 +670,62 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h4 className="font-semibold text-primary mb-3">📊 Total Score: 10 Points (100%)</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h5 className="font-medium text-accent mb-2">💰 Cash Flow Analysis (40% - 4 points)</h5>
-                      <ul className="space-y-1 text-xs">
-                        <li>• <strong>2 points:</strong> Positive monthly cash flow</li>
-                        <li>• <strong>1 point:</strong> Cash-on-cash return {'>'} 6%</li>
-                        <li>• <strong>1 point:</strong> Cash-on-cash return {'>'} 10%</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-accent mb-2">📈 Yield Analysis (30% - 3 points)</h5>
-                      <ul className="space-y-1 text-xs">
-                        <li>• <strong>1 point:</strong> Net yield {'>'} 5%</li>
-                        <li>• <strong>1 point:</strong> Net yield {'>'} 7%</li>
-                        <li>• <strong>1 point:</strong> Gross yield {'>'} 8%</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-accent mb-2">⚠️ Risk Analysis (20% - 2 points)</h5>
-                      <ul className="space-y-1 text-xs">
-                        <li>• <strong>1 point:</strong> Debt-to-equity ratio {'<'} 80%</li>
-                        <li>• <strong>1 point:</strong> Monthly expense ratio {'<'} 30%</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-accent mb-2">🚀 Growth Potential (10% - 1 point)</h5>
-                      <ul className="space-y-1 text-xs">
-                        <li>• <strong>1 point:</strong> Appreciation rate {'>'} 3%</li>
-                      </ul>
-                    </div>
-                  </div>
+                <div>
+                  <h5 className="font-medium text-accent mb-2">💰 Cash Flow Analysis (40% - 4 points)</h5>
+                  <ul className="space-y-1 text-xs">
+                    <li>• <strong>2 points:</strong> Positive monthly cash flow</li>
+                    <li>• <strong>1 point:</strong> Cash-on-cash return {'>'} 6%</li>
+                    <li>• <strong>1 point:</strong> Cash-on-cash return {'>'} 10%</li>
+                  </ul>
                 </div>
-                
+                <div>
+                  <h5 className="font-medium text-accent mb-2">📈 Yield Analysis (30% - 3 points)</h5>
+                  <ul className="space-y-1 text-xs">
+                    <li>• <strong>1 point:</strong> Net yield {'>'} 5%</li>
+                    <li>• <strong>1 point:</strong> Net yield {'>'} 7%</li>
+                    <li>• <strong>1 point:</strong> Gross yield {'>'} 8%</li>
+                  </ul>
+                </div>
+                <div>
+                  <h5 className="font-medium text-accent mb-2">⚠️ Risk Analysis (20% - 2 points)</h5>
+                  <ul className="space-y-1 text-xs">
+                    <li>• <strong>1 point:</strong> Debt-to-equity ratio {'<'} 80%</li>
+                    <li>• <strong>1 point:</strong> Monthly expense ratio {'<'} 30%</li>
+                  </ul>
+                </div>
+                <div>
+                  <h5 className="font-medium text-accent mb-2">🚀 Growth Potential (10% - 1 point)</h5>
+                  <ul className="space-y-1 text-xs">
+                    <li>• <strong>1 point:</strong> Appreciation rate {'>'} 3%</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
                 <div className="bg-success/10 p-4 rounded-lg border border-success/20">
                   <h5 className="font-semibold text-success mb-3">🎯 Score Interpretation:</h5>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="text-center">
-                      <div className="font-bold text-success">8-10 points</div>
-                      <div>✅ Strong Buy</div>
-                      <div className="text-success/70">Low Risk</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-bold text-warning">6-7 points</div>
-                      <div>🔄 Consider</div>
-                      <div className="text-warning/70">Medium Risk</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-bold text-danger">0-5 points</div>
-                      <div>❌ Pass</div>
-                      <div className="text-danger/70">High Risk</div>
-                    </div>
-                  </div>
+                <div className="text-center">
+                  <div className="font-bold text-success">8-10 points</div>
+                  <div>✅ Strong Buy</div>
+                  <div className="text-success/70">Low Risk</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-warning">6-7 points</div>
+                  <div>🔄 Consider</div>
+                  <div className="text-warning/70">Medium Risk</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-danger">0-5 points</div>
+                  <div>❌ Pass</div>
+                  <div className="text-danger/70">High Risk</div>
                 </div>
               </div>
+            </div>
+          </div>
             </DialogContent>
           </Dialog>
-        </div>
+          </div>
         
         <div className="text-center mb-4">
           <div className="text-lg font-semibold">
@@ -762,31 +762,31 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
         </div>
       </Card>
 
-             {/* Key Metrics Grid */}
-       <Card className="card-premium p-4">
+      {/* Key Metrics Grid */}
+      <Card className="card-premium p-4">
 
-                 <div className="flex items-center justify-between mb-4">
-           <div className="flex items-center">
-             <BarChart3 className="h-5 w-5 text-primary mr-2" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <BarChart3 className="h-5 w-5 text-primary mr-2" />
              <div>
-               <h3 className="font-semibold">Key Metrics</h3>
+            <h3 className="font-semibold">Key Metrics</h3>
                {propertyData.name && (
                  <p className="text-xs text-muted-foreground mt-1">{propertyData.name}</p>
                )}
              </div>
-           </div>
-         </div>
+          </div>
+        </div>
         
-                 <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
                        <Card className={`metric-card relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${monthlyCashFlow >= 0 ? 'border-success/30 bg-success/5' : 'border-danger/30 bg-danger/5'}`}>
-             <div className="flex items-center justify-center mb-2">
-               <DollarSign className="h-6 w-6 text-success mr-2" />
-               {monthlyCashFlow >= 0 ? <TrendingUp className="h-4 w-4 text-success" /> : <TrendingDown className="h-4 w-4 text-danger" />}
-             </div>
-             <div className={`metric-value ${monthlyCashFlow >= 0 ? 'text-success' : 'text-danger'}`}>
-               {formatCurrency(monthlyCashFlow)}
-             </div>
-             <div className="metric-label">Monthly Cash Flow</div>
+            <div className="flex items-center justify-center mb-2">
+              <DollarSign className="h-6 w-6 text-success mr-2" />
+              {monthlyCashFlow >= 0 ? <TrendingUp className="h-4 w-4 text-success" /> : <TrendingDown className="h-4 w-4 text-danger" />}
+            </div>
+            <div className={`metric-value ${monthlyCashFlow >= 0 ? 'text-success' : 'text-danger'}`}>
+              {formatCurrency(monthlyCashFlow)}
+            </div>
+            <div className="metric-label">Monthly Cash Flow</div>
              
              {/* Health Score Indicator */}
              <div className="absolute bottom-2 right-2">
@@ -833,16 +833,16 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                  </DialogContent>
                </Dialog>
              </div>
-           </Card>
+          </Card>
 
                        <Card className={`metric-card relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${cashOnCashReturn >= 8 ? 'border-success/30 bg-success/5' : cashOnCashReturn >= 6 ? 'border-warning/30 bg-warning/5' : 'border-danger/30 bg-danger/5'}`}>
-             <div className="flex items-center justify-center mb-2">
-               <Target className="h-6 w-6 text-primary mr-2" />
-             </div>
+            <div className="flex items-center justify-center mb-2">
+              <Target className="h-6 w-6 text-primary mr-2" />
+            </div>
              <div className={`metric-value ${cashOnCashReturn >= 8 ? 'text-success' : cashOnCashReturn >= 6 ? 'text-warning' : 'text-danger'}`}>
-               {cashOnCashReturn.toFixed(1)}%
-             </div>
-             <div className="metric-label">Cash-on-Cash Return</div>
+              {cashOnCashReturn.toFixed(1)}%
+            </div>
+            <div className="metric-label">Cash-on-Cash Return</div>
              
              {/* Health Score Indicator */}
              <div className="absolute bottom-2 right-2">
@@ -889,16 +889,16 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                  </DialogContent>
                </Dialog>
              </div>
-           </Card>
+          </Card>
 
                        <Card className={`metric-card relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${irr >= 12 ? 'border-success/30 bg-success/5' : irr >= 8 ? 'border-warning/30 bg-warning/5' : 'border-danger/30 bg-danger/5'}`}>
-             <div className="flex items-center justify-center mb-2">
-               <Calculator className="h-6 w-6 text-secondary mr-2" />
-             </div>
+            <div className="flex items-center justify-center mb-2">
+              <Calculator className="h-6 w-6 text-secondary mr-2" />
+            </div>
              <div className={`metric-value ${irr >= 12 ? 'text-success' : irr >= 8 ? 'text-warning' : 'text-danger'}`}>
-               {irr.toFixed(1)}%
-             </div>
-             <div className="metric-label">IRR (Internal Rate of Return)</div>
+              {irr.toFixed(1)}%
+            </div>
+            <div className="metric-label">IRR (Internal Rate of Return)</div>
              
              {/* Health Score Indicator */}
              <div className="absolute bottom-2 right-2">
@@ -945,15 +945,15 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                  </DialogContent>
                </Dialog>
              </div>
-           </Card>
+          </Card>
 
                        <Card className={`metric-card relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${annualROI >= 15 ? 'border-success/30 bg-success/5' : annualROI >= 10 ? 'border-warning/30 bg-warning/5' : 'border-danger/30 bg-danger/5'}`}>
-             <div className="flex items-center justify-center mb-2">
-               <ArrowUpRight className="h-6 w-6 text-accent mr-2" />
-             </div>
+            <div className="flex items-center justify-center mb-2">
+              <ArrowUpRight className="h-6 w-6 text-accent mr-2" />
+            </div>
              <div className={`metric-value ${annualROI >= 15 ? 'text-success' : annualROI >= 10 ? 'text-warning' : 'text-danger'}`}>
-               {annualROI.toFixed(1)}%
-             </div>
+              {annualROI.toFixed(1)}%
+            </div>
              <div className="metric-label">Annual ROI (Year 1)</div>
              
              {/* Health Score Indicator */}
@@ -1001,7 +1001,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                  </DialogContent>
                </Dialog>
              </div>
-           </Card>
+          </Card>
 
                        <Card className={`metric-card relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${(() => {
                          const yearMultiplier = selectedYear === '10' ? 1 : parseInt(selectedYear) / 10;
@@ -1119,13 +1119,13 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
            </Card>
 
                        <Card className={`metric-card relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${grossYield >= 8 ? 'border-success/30 bg-success/5' : grossYield >= 6 ? 'border-warning/30 bg-warning/5' : 'border-danger/30 bg-danger/5'}`}>
-             <div className="flex items-center justify-center mb-2">
-               <PieChart className="h-6 w-6 text-success mr-2" />
-             </div>
+            <div className="flex items-center justify-center mb-2">
+              <PieChart className="h-6 w-6 text-success mr-2" />
+            </div>
              <div className={`metric-value ${grossYield >= 8 ? 'text-success' : grossYield >= 6 ? 'text-warning' : 'text-danger'}`}>
-               {grossYield.toFixed(1)}%
-             </div>
-             <div className="metric-label">Gross Yield</div>
+              {grossYield.toFixed(1)}%
+            </div>
+            <div className="metric-label">Gross Yield</div>
              
              {/* Health Score Indicator */}
              <div className="absolute bottom-2 right-2">
@@ -1172,16 +1172,16 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                  </DialogContent>
                </Dialog>
              </div>
-           </Card>
+          </Card>
 
                        <Card className={`metric-card relative transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${netYield >= 6 ? 'border-success/30 bg-success/5' : netYield >= 4 ? 'border-warning/30 bg-warning/5' : 'border-danger/30 bg-danger/5'}`}>
-             <div className="flex items-center justify-center mb-2">
-               <BarChart3 className="h-6 w-6 text-warning mr-2" />
-             </div>
+            <div className="flex items-center justify-center mb-2">
+              <BarChart3 className="h-6 w-6 text-warning mr-2" />
+            </div>
              <div className={`metric-value ${netYield >= 6 ? 'text-success' : netYield >= 4 ? 'text-warning' : 'text-danger'}`}>
-               {netYield.toFixed(1)}%
-             </div>
-             <div className="metric-label">Net Yield</div>
+              {netYield.toFixed(1)}%
+            </div>
+            <div className="metric-label">Net Yield</div>
              
                           {/* Health Score Indicator */}
              <div className="absolute bottom-2 right-2">
@@ -1194,7 +1194,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                ) : (
                  <span className="text-2xl">❌</span>
                )}
-             </div>
+          </div>
              <div className="absolute top-2 right-2">
                <Dialog>
                  <DialogTrigger asChild>
@@ -1213,7 +1213,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
                        <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">What it means:</h4>
                        <p>Shows actual profit margin after all operating expenses, giving a realistic view of investment returns.</p>
-                     </div>
+          </div>
                      <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
                        <h4 className="font-semibold text-green-700 dark:text-green-300 mb-2">Healthy values:</h4>
                        <ul className="space-y-1">
@@ -1223,30 +1223,30 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                          <li>• <strong>2-3%:</strong> ⚠️ Below average</li>
                          <li>• <strong>Below 2%:</strong> ❌ Low net yield</li>
                        </ul>
-                     </div>
+        </div>
                    </div>
                  </DialogContent>
                </Dialog>
              </div>
            </Card>
-         </div>
+        </div>
       </Card>
 
 
 
       {/* Detailed Year-by-Year Table */}
       <Card className="card-premium p-6">
-                 <div className="flex items-center justify-between mb-4">
-           <div className="flex items-center">
-             <Calculator className="h-5 w-5 text-primary mr-2" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <Calculator className="h-5 w-5 text-primary mr-2" />
              <div>
-               <h3 className="font-semibold">Year-by-Year Projection</h3>
+            <h3 className="font-semibold">Year-by-Year Projection</h3>
                {propertyData.name && (
                  <p className="text-xs text-muted-foreground mt-1">{propertyData.name}</p>
                )}
              </div>
-           </div>
-         </div>
+          </div>
+        </div>
         
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -1282,13 +1282,13 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
 
       
 
-             {/* Investment Overview - Enhanced */}
-       <Card className="card-premium p-6">
-         <div className="flex items-center justify-between mb-6">
+      {/* Investment Overview - Enhanced */}
+      <Card className="card-premium p-6">
+        <div className="flex items-center justify-between mb-6">
            <div>
-             <h3 className="font-semibold text-lg">Investment Overview</h3>
-           </div>
-         </div>
+          <h3 className="font-semibold text-lg">Investment Overview</h3>
+          </div>
+        </div>
         
         {/* Property Info Badges */}
         <div className="flex flex-wrap gap-3 mb-6">
