@@ -199,8 +199,7 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
 
   const applyQuickStart = (preset: typeof quickStartPresets[0]) => {
     setJourneyData(preset.data);
-    setCurrentStep(journeySteps.length); // Jump to last step
-    setShowQuickStart(false);
+    setCurrentStep(1); // Start from beginning to review all data
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -641,15 +640,18 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
         {/* Quick Start Presets */}
         <Card className="p-6 mb-6 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
           <h3 className="text-lg font-semibold mb-3 text-center">Quick Start Options</h3>
+          <p className="text-sm text-muted-foreground text-center mb-4">
+            Choose a preset to automatically fill in common investment profiles, then review and customize as needed.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {quickStartPresets.map((preset, index) => (
               <Button
                 key={index}
                 variant="outline"
                 onClick={() => applyQuickStart(preset)}
-                className="flex flex-col items-center p-3 h-auto text-xs"
+                className="flex flex-col items-center p-3 h-auto text-xs hover:bg-primary/5 transition-colors"
               >
-                <div className="font-semibold mb-1">{preset.name}</div>
+                <div className="font-semibold mb-1 text-primary">{preset.name}</div>
                 <div className="text-muted-foreground text-center">{preset.description}</div>
               </Button>
             ))}
@@ -778,6 +780,16 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
               <div className="text-xs text-muted-foreground">Budget</div>
             </div>
           </div>
+          
+          {/* Show completion status */}
+          {journeyData.propertyType && journeyData.location && journeyData.investmentGoal && journeyData.timeline && journeyData.experience && (
+            <div className="mt-4 p-3 bg-success/10 rounded-lg border border-success/20">
+              <div className="flex items-center justify-center gap-2 text-success">
+                <CheckCircle className="h-4 w-4" />
+                <span className="text-sm font-medium">All fields completed! Ready to analyze.</span>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </div>
