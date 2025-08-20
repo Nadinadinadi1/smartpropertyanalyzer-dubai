@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, ArrowRight, Home, MapPin, Calculator, Building, TrendingUp, Target, Settings } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, ArrowRight, Home, MapPin, Calculator, Building, TrendingUp, Target, Settings, MessageCircle, Send, Star, Sun, Moon, HardHat, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Toaster } from 'sonner';
+
 
 interface PropertyData {
   propertyStatus: 'ready' | 'off-plan';
@@ -21,10 +26,13 @@ interface PropertyData {
   interestRate: number;
   dldFeeIncluded: boolean;
   monthlyRent: number;
+  additionalIncome: number;
   vacancyRate: number;
   maintenanceRate: number;
   managementFee: number;
+  managementBaseFee: number; // Base fee
   insurance: number;
+  otherExpenses: number;
   // Growth Parameters
   rentGrowth: number;
   appreciationRate: number;
@@ -68,6 +76,18 @@ const propertyTypes = ['Apartment', 'Villa', 'Townhouse', 'Studio', 'Penthouse',
 
 export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [rating, setRating] = useState(0);
+  const [email, setEmail] = useState('');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Auto-scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
   const [propertyData, setPropertyData] = useState<PropertyData>({
     propertyStatus: 'ready',
     name: '',
@@ -80,10 +100,13 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
     interestRate: 4.5,
     dldFeeIncluded: true,
     monthlyRent: 8000,
+    additionalIncome: 500,
     vacancyRate: 10,
     maintenanceRate: 2,
     managementFee: 8,
+    managementBaseFee: 200, // Base fee
     insurance: 1500,
+    otherExpenses: 200,
     rentGrowth: 3,
     appreciationRate: 4,
     expenseInflation: 2.5,
@@ -103,8 +126,64 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const handleAnalyze = () => {
-    onAnalyze(propertyData);
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    setProgress(0);
+    
+    // Scroll to top when analysis starts
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Show feedback dialog after 3.5 seconds instead of immediately
+    const feedbackDelay = 3500;
+
+    // Simulate 10-second analysis delay with smooth progress
+    const durationMs = 10000;
+    const startTime = Date.now();
+    const progressInterval = window.setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, Math.round((elapsed / durationMs) * 100));
+      setProgress(pct);
+      if (pct >= 100) {
+        clearInterval(progressInterval);
+      }
+    }, 100);
+    
+    // Show feedback dialog after 3.5 seconds
+    setTimeout(() => {
+      setShowFeedback(true);
+      // Scroll to top when feedback dialog appears
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, feedbackDelay);
+
+    // Don't auto-complete analysis - wait for feedback to be handled
+    // The analysis will be completed in handleFeedbackSubmit or when feedback is skipped
+  };
+
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feedback.trim()) {
+      toast.error('Please provide feedback');
+      return;
+    }
+
+    setIsSubmittingFeedback(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      toast.success('Thank you for your feedback! We\'ll review it soon.');
+      setShowFeedback(false);
+      setRating(0);
+      setFeedback('');
+      setEmail('');
+      setIsSubmittingFeedback(false);
+      
+      // Scroll to top when analysis completes
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Complete the analysis after feedback is submitted
+      setIsAnalyzing(false);
+      onAnalyze(propertyData);
+    }, 1000);
   };
 
   const formatCurrency = (value: number) => {
@@ -116,26 +195,99 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
-      {/* Progress Header */}
-      <div className="bg-gradient-hero p-4 text-white">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold">Smart Property Analyser Dubai</h1>
-          <span className="text-sm opacity-90">Step {currentStep} of 6</span>
+    <>
+      <div className="h-full flex flex-col bg-background">
+        {/* Logo and Theme Toggle */}
+        <div className="absolute top-4 left-4 z-10">
+          <button
+            onClick={() => window.location.hash = '#analyze'}
+            className="relative hover:scale-105 transition-transform duration-200"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            {/* BETA Badge */}
+            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md border border-white">
+              BETA
+            </div>
+          </button>
         </div>
-        
-        <div className="flex space-x-1">
-          {steps.map((step) => (
-            <div
-              key={step.id}
-              className={cn(
-                'flex-1 h-1 rounded-full transition-all',
-                step.id <= currentStep ? 'bg-white' : 'bg-white/30'
-              )}
-            />
-          ))}
+
+        {/* Theme Toggle and Feedback Button - Top Right */}
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          {/* Feedback Button */}
+          <button
+            onClick={() => {
+              // Open feedback dialog
+              setShowFeedback(true);
+            }}
+            className="w-10 h-10 bg-primary border border-primary rounded-xl flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors"
+          >
+            <MessageCircle className="h-5 w-5 text-white" />
+          </button>
+          
+          {/* Theme Toggle */}
+          <button
+            onClick={() => {
+              // Toggle theme logic here
+              document.documentElement.classList.toggle('dark');
+            }}
+            className="w-10 h-10 bg-card/80 backdrop-blur-sm border border-border rounded-xl flex items-center justify-center shadow-md hover:bg-card transition-colors"
+          >
+            <Sun className="h-5 w-5 text-primary dark:hidden" />
+            <Moon className="h-5 w-5 text-primary hidden dark:block" />
+          </button>
         </div>
-      </div>
+
+        {/* Progress Header with Journey Banner */}
+        <div className="bg-gradient-hero p-4 text-white">
+          {/* Journey Simulator Banner - Compact - Only show on first step */}
+          {currentStep === 1 && (
+            <div className="mb-4 p-3 bg-blue-100/80 dark:bg-blue-50/80 rounded-lg border border-blue-200/60 shadow-lg">
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-blue-800 dark:text-blue-700 mb-2">
+                  🚀 New: Investment Journey Simulator
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-600 mb-3 max-w-2xl mx-auto">
+                  Curious about your investment potential? Try our guided journey first for instant insights!
+                </p>
+                <Button
+                  onClick={() => {
+                    // Dispatch custom event to navigate to journey tab
+                    window.dispatchEvent(new CustomEvent('navigateToJourney', { 
+                      detail: { targetTab: 'journey' } 
+                    }));
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                  🎮 Start Journey
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Steps Progress */}
+          <div className="flex items-center justify-center mb-3">
+            <div className="text-center">
+              <div className="text-xl font-bold">Step {currentStep} of 6</div>
+              <div className="text-xs opacity-90 tracking-wide">{steps.find((s) => s.id === currentStep)?.title}</div>
+            </div>
+          </div>
+          
+          <div className="flex space-x-2">
+            {steps.map((step) => (
+              <div
+                key={step.id}
+                className={cn(
+                  'flex-1 h-2 rounded-full transition-all',
+                  step.id <= currentStep ? 'bg-white' : 'bg-white/30'
+                )}
+              />
+            ))}
+          </div>
+        </div>
 
       {/* Step Content */}
       <div className="flex-1 p-4 overflow-y-auto">
@@ -177,7 +329,7 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                     onClick={() => updatePropertyData('propertyStatus', 'off-plan')}
                   >
                     <div className="text-center">
-                      <Building className="h-8 w-8 mx-auto mb-2 text-secondary" />
+                      <HardHat className="h-8 w-8 mx-auto mb-2 text-primary" />
                       <h3 className="font-semibold">Off-Plan Property</h3>
                       <p className="text-xs text-muted-foreground">Under construction</p>
                     </div>
@@ -185,13 +337,7 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                 </div>
               </div>
 
-              {propertyData.propertyStatus === 'off-plan' && (
-                <div className="bg-secondary/10 p-4 rounded-lg">
-                  <p className="text-sm text-secondary">
-                    ℹ️ Off-plan properties may have developer incentives like DLD fee coverage and flexible payment plans.
-                  </p>
-                </div>
-              )}
+
             </div>
           </Card>
         )}
@@ -264,7 +410,7 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Property Type</Label>
+                  <Label>Type</Label>
                   <Select value={propertyData.propertyType} onValueChange={(value) => updatePropertyData('propertyType', value)}>
                     <SelectTrigger className="mt-2">
                       <SelectValue placeholder="Select type" />
@@ -392,21 +538,42 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
             </div>
 
             <div className="space-y-6">
-              <div>
-                <Label>Monthly Rent</Label>
-                <div className="mt-2 space-y-3">
-                  <Slider
-                    value={[propertyData.monthlyRent]}
-                    onValueChange={(value) => updatePropertyData('monthlyRent', value[0])}
-                    max={50000}
-                    min={2000}
-                    step={500}
-                    className="w-full"
-                  />
-                  <div className="text-center">
-                    <span className="text-2xl font-bold text-gradient-success">
-                      {formatCurrency(propertyData.monthlyRent)}/month
-                    </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label>Monthly Rent</Label>
+                  <div className="mt-2 space-y-3">
+                    <Slider
+                      value={[propertyData.monthlyRent]}
+                      onValueChange={(value) => updatePropertyData('monthlyRent', value[0])}
+                      max={50000}
+                      min={2000}
+                      step={500}
+                      className="w-full"
+                    />
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-gradient-success">
+                        {formatCurrency(propertyData.monthlyRent)}/month
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Additional Income</Label>
+                  <div className="mt-2 space-y-3">
+                    <Slider
+                      value={[propertyData.additionalIncome]}
+                      onValueChange={(value) => updatePropertyData('additionalIncome', value[0])}
+                      max={10000}
+                      min={0}
+                      step={100}
+                      className="w-full"
+                    />
+                    <div className="text-center">
+                      <span className="text-lg font-bold text-accent">
+                        {formatCurrency(propertyData.additionalIncome)}/month
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -432,10 +599,27 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
               </div>
 
               <div className="bg-success/10 p-4 rounded-lg">
-                <h4 className="font-semibold text-sm mb-2 text-success">Effective Annual Rent</h4>
-                <p className="text-2xl font-bold text-success">
-                  {formatCurrency(propertyData.monthlyRent * 12 * ((100 - propertyData.vacancyRate) / 100))}
-                </p>
+                <h4 className="font-semibold text-sm mb-2 text-success">Effective Annual Income</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-success/70">Rent (net):</span>
+                    <span className="font-semibold text-success">
+                      {formatCurrency(propertyData.monthlyRent * 12 * ((100 - propertyData.vacancyRate) / 100))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-accent/70">Additional Income:</span>
+                    <span className="font-semibold text-accent">
+                      {formatCurrency(propertyData.additionalIncome * 12)}
+                    </span>
+                  </div>
+                  <div className="border-t border-success/20 pt-2 flex justify-between items-center">
+                    <span className="text-sm font-semibold text-success">Total:</span>
+                    <span className="text-xl font-bold text-success">
+                      {formatCurrency((propertyData.monthlyRent * 12 * ((100 - propertyData.vacancyRate) / 100)) + (propertyData.additionalIncome * 12))}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </Card>
@@ -470,41 +654,108 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                 </div>
               </div>
 
-              <div>
-                <Label>Management Fee (% of rent)</Label>
-                <div className="mt-2 space-y-3">
-                  <Slider
-                    value={[propertyData.managementFee]}
-                    onValueChange={(value) => updatePropertyData('managementFee', value[0])}
-                    max={15}
-                    min={0}
-                    step={1}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-sm">
-                    <span>{propertyData.managementFee}%</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label>Management Fee (% of rent)</Label>
+                  <div className="mt-2 space-y-3">
+                    <Slider
+                      value={[propertyData.managementFee]}
+                      onValueChange={(value) => updatePropertyData('managementFee', value[0])}
+                      max={15}
+                      min={0}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm">
+                      <span>{propertyData.managementFee}%</span>
+                      <span className="font-semibold text-warning">
+                        {formatCurrency(propertyData.monthlyRent * 12 * (propertyData.managementFee / 100))}/year
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Base Fee</Label>
+                  <div className="mt-2 space-y-3">
+                    <Slider
+                      value={[propertyData.managementBaseFee]}
+                      onValueChange={(value) => updatePropertyData('managementBaseFee', value[0])}
+                      max={1000}
+                      min={0}
+                      step={50}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-sm">
+                      <span>{formatCurrency(propertyData.managementBaseFee)}</span>
+                      <span className="font-semibold text-warning">
+                        {formatCurrency(propertyData.managementBaseFee * 12)}/year
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h4 className="font-semibold text-sm mb-2 text-muted-foreground">Total Management Cost</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Percentage Fee:</span>
                     <span className="font-semibold text-warning">
-                      {formatCurrency(propertyData.monthlyRent * 12 * (propertyData.managementFee / 100))}/year
+                      {formatCurrency(propertyData.monthlyRent * (propertyData.managementFee / 100))}/month
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Base Fee:</span>
+                    <span className="font-semibold text-warning">
+                      {formatCurrency(propertyData.managementBaseFee)}/month
+                    </span>
+                  </div>
+                  <div className="border-t border-muted/20 pt-2 flex justify-between items-center">
+                    <span className="text-sm font-semibold text-primary">Total:</span>
+                    <span className="text-lg font-bold text-primary">
+                      {formatCurrency((propertyData.monthlyRent * (propertyData.managementFee / 100)) + propertyData.managementBaseFee)}/month
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div>
-                <Label>Annual Insurance</Label>
-                <div className="mt-2 space-y-3">
-                  <Slider
-                    value={[propertyData.insurance]}
-                    onValueChange={(value) => updatePropertyData('insurance', value[0])}
-                    max={5000}
-                    min={500}
-                    step={100}
-                    className="w-full"
-                  />
-                  <div className="text-center">
-                    <span className="text-lg font-bold text-warning">
-                      {formatCurrency(propertyData.insurance)}/year
-                    </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label>Annual Insurance</Label>
+                  <div className="mt-2 space-y-3">
+                    <Slider
+                      value={[propertyData.insurance]}
+                      onValueChange={(value) => updatePropertyData('insurance', value[0])}
+                      max={5000}
+                      min={500}
+                      step={100}
+                      className="w-full"
+                    />
+                    <div className="text-center">
+                      <span className="text-lg font-bold text-warning">
+                        {formatCurrency(propertyData.insurance)}/year
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Other Expenses</Label>
+                  <div className="mt-2 space-y-3">
+                    <Slider
+                      value={[propertyData.otherExpenses]}
+                      onValueChange={(value) => updatePropertyData('otherExpenses', value[0])}
+                      max={3000}
+                      min={0}
+                      step={100}
+                      className="w-full"
+                    />
+                                   <div className="text-center">
+                 <span className="text-lg font-bold text-warning">
+                   {formatCurrency(propertyData.otherExpenses)}/year
+                 </span>
+               </div>
                   </div>
                 </div>
               </div>
@@ -526,7 +777,43 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                 
                 <div className="space-y-4">
                   <div>
-                    <Label>Rent Growth (% per year)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Label>Rent Growth (% per year)</Label>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors">
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-lg">Rent Growth Rate</DialogTitle>
+                            <DialogDescription className="text-sm text-muted-foreground">
+                              The annual percentage increase in rental income over time.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 text-sm">
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">What it means:</h4>
+                              <p>This represents how much your rental income is expected to grow each year due to market conditions, property improvements, and inflation.</p>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-green-700 dark:text-green-300 mb-2">Typical ranges:</h4>
+                              <ul className="space-y-1">
+                                <li>• <strong>0-2%:</strong> Conservative estimate</li>
+                                <li>• <strong>2-4%:</strong> Moderate growth</li>
+                                <li>• <strong>4-6%:</strong> Strong growth</li>
+                                <li>• <strong>6-8%:</strong> High growth (Dubai premium areas)</li>
+                              </ul>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-2">Consider:</h4>
+                              <p>Dubai's rental market has historically shown strong growth, but consider current market conditions and your property's location.</p>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <div className="mt-2 space-y-3">
                       <Slider
                         value={[propertyData.rentGrowth]}
@@ -545,7 +832,43 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                   </div>
 
                   <div>
-                    <Label>Property Appreciation (% per year)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Label>Property Appreciation (% per year)</Label>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors">
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-lg">Property Appreciation Rate</DialogTitle>
+                            <DialogDescription className="text-sm text-muted-foreground">
+                              The annual percentage increase in your property's market value over time.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 text-sm">
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">What it means:</h4>
+                              <p>This represents how much your property's value is expected to increase each year due to market demand, location development, and economic factors.</p>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-green-700 dark:text-green-300 mb-2">Dubai market ranges:</h4>
+                              <ul className="space-y-1">
+                                <li>• <strong>2-4%:</strong> Established areas (conservative)</li>
+                                <li>• <strong>4-6%:</strong> Growing areas (moderate)</li>
+                                <li>• <strong>6-8%:</strong> Premium areas (strong)</li>
+                                <li>• <strong>8-10%:</strong> Emerging areas (high potential)</li>
+                              </ul>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-2">Important factors:</h4>
+                              <p>Consider infrastructure development, new projects in the area, and Dubai's long-term growth plans when estimating appreciation.</p>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <div className="mt-2 space-y-3">
                       <Slider
                         value={[propertyData.appreciationRate]}
@@ -564,7 +887,43 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                   </div>
 
                   <div>
-                    <Label>Expense Inflation (% per year)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Label>Expense Inflation (% per year)</Label>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors">
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-lg">Expense Inflation Rate</DialogTitle>
+                            <DialogDescription className="text-sm text-muted-foreground">
+                              The annual percentage increase in property-related expenses over time.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 text-sm">
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">What it means:</h4>
+                              <p>This represents how much your property expenses (maintenance, insurance, management fees) are expected to increase each year due to inflation and market changes.</p>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-green-700 dark:text-green-300 mb-2">Typical ranges:</h4>
+                              <ul className="space-y-1">
+                                <li>• <strong>1-2%:</strong> Low inflation (conservative)</li>
+                                <li>• <strong>2-3%:</strong> Moderate inflation</li>
+                                <li>• <strong>3-4%:</strong> Standard inflation</li>
+                                <li>• <strong>4-6%:</strong> High inflation (emerging markets)</li>
+                              </ul>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-2">Why it matters:</h4>
+                              <p>Higher expense inflation reduces your net cash flow over time, so it's important to account for this in long-term projections.</p>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <div className="mt-2 space-y-3">
                       <Slider
                         value={[propertyData.expenseInflation]}
@@ -589,7 +948,44 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                 
                 <div className="space-y-4">
                   <div>
-                    <Label>Exit Cap Rate (%)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Label>Exit Cap Rate (%)</Label>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors">
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-lg">Exit Cap Rate</DialogTitle>
+                            <DialogDescription className="text-sm text-muted-foreground">
+                              The capitalization rate used to estimate your property's selling price when you exit the investment.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 text-sm">
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">What it means:</h4>
+                              <p>Cap rate = Annual Net Operating Income ÷ Property Value. A lower cap rate means higher property value, while a higher cap rate means lower value.</p>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-green-700 dark:text-green-300 mb-2">Dubai market ranges:</h4>
+                              <ul className="space-y-1">
+                                <li>• <strong>3-5%:</strong> Premium areas (high value)</li>
+                                <li>• <strong>5-7%:</strong> Established areas (moderate value)</li>
+                                <li>• <strong>7-9%:</strong> Growing areas (good value)</li>
+                                <li>• <strong>9-12%:</strong> Emerging areas (high yield)</li>
+                              </ul>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-2">Formula:</h4>
+                              <p><strong>Property Value = Annual Net Operating Income ÷ Cap Rate</strong><br/>
+                              Example: If NOI is AED 100,000 and cap rate is 5%, property value = AED 2,000,000</p>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <div className="mt-2 space-y-3">
                       <Slider
                         value={[propertyData.exitCapRate]}
@@ -608,7 +1004,49 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
                   </div>
 
                   <div>
-                    <Label>Selling Costs (%)</Label>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Label>Selling Costs (%)</Label>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors">
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle className="text-lg">Selling Costs</DialogTitle>
+                            <DialogDescription className="text-sm text-muted-foreground">
+                              The total percentage of your property's selling price that goes to transaction costs and fees.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-3 text-sm">
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">What it includes:</h4>
+                              <ul className="space-y-1">
+                                <li>• Real estate agent commission (2-3%)</li>
+                                <li>• DLD transfer fees (4% for non-GCC)</li>
+                                <li>• Legal and documentation fees</li>
+                                <li>• Bank processing fees</li>
+                                <li>• Marketing and staging costs</li>
+                              </ul>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-green-700 dark:text-green-300 mb-2">Dubai typical costs:</h4>
+                              <ul className="space-y-1">
+                                <li>• <strong>1-3%:</strong> Agent commission</li>
+                                <li>• <strong>4%:</strong> DLD transfer fee</li>
+                                <li>• <strong>1-2%:</strong> Other fees</li>
+                                <li>• <strong>Total: 6-9%</strong> of selling price</li>
+                              </ul>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg">
+                              <h4 className="font-semibold text-amber-700 dark:text-amber-300 mb-2">Impact on returns:</h4>
+                              <p>Higher selling costs reduce your net profit when you sell. For example, if you sell for AED 2M with 7% costs, you'll receive AED 1.86M.</p>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                     <div className="mt-2 space-y-3">
                       <Slider
                         value={[propertyData.sellingCosts]}
@@ -648,7 +1086,7 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
           {currentStep < 6 ? (
             <Button
               onClick={nextStep}
-              className="btn-premium flex items-center gap-2"
+              className="btn-green flex items-center gap-2"
             >
               Next
               <ArrowRight className="h-4 w-4" />
@@ -656,14 +1094,190 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
           ) : (
             <Button
               onClick={handleAnalyze}
-              className="btn-gold flex items-center gap-2 px-8"
+              disabled={isAnalyzing}
+              className={cn(
+                "flex items-center gap-2 px-8",
+                isAnalyzing ? "opacity-50 cursor-not-allowed" : "btn-purple"
+              )}
             >
               <Calculator className="h-4 w-4" />
-              Analyze Investment
+              {isAnalyzing ? 'Analysis Running...' : 'Run Investment Analysis'}
             </Button>
           )}
         </div>
       </div>
-    </div>
+
+
+
+      {/* Enhanced Loading Overlay */}
+      {isAnalyzing && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border-2 border-primary/20 rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
+            <div className="flex flex-col items-center gap-6">
+              {/* Animated Brain Icon */}
+              <div className="relative">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center border-2 border-primary/30">
+                  <svg 
+                    className="w-12 h-12 text-primary animate-pulse" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={1.5} 
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" 
+                    />
+                  </svg>
+                </div>
+                
+                {/* Rotating Rings */}
+                <div className="absolute inset-0 w-20 h-20 border-2 border-primary/30 border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-2 w-16 h-16 border-2 border-accent/40 border-t-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
+                <div className="absolute inset-4 w-12 h-12 border-2 border-primary/20 border-t-transparent rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
+              </div>
+              
+              {/* Loading Text */}
+              <div className="text-center space-y-2">
+                <h3 className="text-xl font-bold text-gradient-primary">Analysis in Progress</h3>
+                <p className="text-sm text-muted-foreground">
+                  Our smart algorithms are analyzing your investment data...
+                </p>
+              </div>
+              
+              {/* Enhanced Progress Bar */}
+              <div className="w-full space-y-3">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Processing...</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="w-full bg-muted/30 rounded-full h-3 overflow-hidden border border-muted/50">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full transition-all duration-300 ease-out shadow-lg"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <div className="text-center text-xs text-muted-foreground">
+                  ~{Math.max(0, Math.ceil((100 - progress) / 10))} seconds remaining
+                </div>
+              </div>
+              
+              {/* Animated Dots */}
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Dialog */}
+      <Dialog open={showFeedback} onOpenChange={(open) => {
+        if (!open) {
+          // User is trying to close the dialog - complete the analysis
+          setShowFeedback(false);
+          // Scroll to top when analysis completes
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setIsAnalyzing(false);
+          onAnalyze(propertyData);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Beta User Feedback</DialogTitle>
+            <DialogDescription>
+              Help us improve the app! Please share your experience while we analyze your investment. 
+              Feel free to provide feedback during the analysis - it won't interrupt the process.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="rating">How would you rate your experience?</Label>
+              <div className="flex gap-2 mt-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className="p-1 hover:scale-110 transition-transform"
+                  >
+                    <Star
+                      className={`h-6 w-6 ${
+                        star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="feedback">What could we improve?</Label>
+              <Textarea
+                id="feedback"
+                placeholder="Share your thoughts about the app..."
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                className="mt-2"
+                rows={3}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="email">Email (optional)</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowFeedback(false);
+                  // Scroll to top when analysis completes
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  // Complete the analysis when feedback is skipped
+                  setIsAnalyzing(false);
+                  onAnalyze(propertyData);
+                }}
+                className="flex-1"
+              >
+                Skip
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmittingFeedback || !feedback.trim()}
+                className="flex-1"
+              >
+                {isSubmittingFeedback ? (
+                  <>
+                    <Send className="h-4 w-4 mr-2 animate-pulse" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send Feedback
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Toaster />
+      </div>
+    </>
   );
 }

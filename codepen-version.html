@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dubai Property Investment App - Mobile Optimized</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Mobile Optimized CSS Variables - Lighter Default Theme */
+        :root {
+            --background: 0 0% 100%;
+            --background-secondary: 0 0% 98%;
+            --foreground: 222 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-secondary: 0 0% 98%;
+            --card-premium: 0 0% 96%;
+            --card-foreground: 222 84% 4.9%;
+            --primary: 221 83% 53%;
+            --secondary: 180 84% 35%;
+            --accent: 43 96% 56%;
+            --accent-light: 43 96% 62%;
+            --accent-foreground: 222 84% 4.9%;
+            --success: 142 76% 36%;
+            --success-light: 142 76% 42%;
+            --success-foreground: 0 0% 100%;
+            --warning: 38 92% 50%;
+            --warning-light: 38 92% 56%;
+            --warning-foreground: 222 84% 4.9%;
+            --danger: 0 84% 60%;
+            --danger-light: 0 84% 66%;
+            --danger-foreground: 0 0% 100%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215 16% 47%;
+            --muted-dark: 210 40% 90%;
+            --border: 214 32% 91%;
+            --border-secondary: 214 32% 85%;
+            --input: 214 32% 91%;
+            --ring: 221 83% 53%;
+            --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(180 84% 35%));
+            --gradient-premium: linear-gradient(135deg, hsl(221 83% 45%), hsl(221 83% 53%));
+            --gradient-gold: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 62%));
+            --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 42%));
+            --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
+            --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(221 83% 53%) 50%, hsl(180 84% 35%) 100%);
+            --shadow-sm: 0 1px 2px 0 hsl(222 84% 4.9% / 0.05);
+            --shadow-md: 0 4px 6px -1px hsl(222 84% 4.9% / 0.1), 0 2px 4px -1px hsl(222 84% 4.9% / 0.06);
+            --shadow-lg: 0 10px 15px -3px hsl(222 84% 4.9% / 0.1), 0 4px 6px -2px hsl(222 84% 4.9% / 0.05);
+            --shadow-xl: 0 20px 25px -5px hsl(222 84% 4.9% / 0.1), 0 10px 10px -5px hsl(222 84% 4.9% / 0.04);
+            --shadow-premium: 0 25px 50px -12px hsl(221 83% 53% / 0.25);
+            --shadow-gold: 0 10px 30px -10px hsl(43 96% 56% / 0.3);
+            --radius: 0.75rem;
+        }
+
+        .dark {
+            --background: 222 84% 4.9%;
+            --background-secondary: 222 84% 6%;
+            --foreground: 210 40% 98%;
+            --card: 222 84% 6%;
+            --card-secondary: 222 84% 8%;
+            --card-premium: 222 84% 10%;
+            --card-foreground: 210 40% 98%;
+            --muted: 222 84% 8%;
+            --muted-foreground: 215 20% 65%;
+            --muted-dark: 222 84% 12%;
+            --border: 222 84% 12%;
+            --border-secondary: 222 84% 16%;
+            --input: 222 84% 12%;
+            --gradient-card: linear-gradient(145deg, hsl(222 84% 6%), hsl(222 84% 8%));
+            --gradient-hero: linear-gradient(135deg, hsl(222 84% 4.9%) 0%, hsl(221 83% 53%) 50%, hsl(180 84% 35%) 100%);
+        }
+
+        /* Mobile Optimizations */
+        * {
+            border-color: hsl(var(--border));
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-family: system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        /* Mobile touch targets */
+        button, a, input, select, textarea {
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        /* Mobile scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background-color: hsl(var(--muted));
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: hsl(var(--muted-foreground) / 0.3);
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: hsl(var(--muted-foreground) / 0.5);
+        }
+
+        /* Mobile Button Variants */
+        .btn-premium {
+            background: var(--gradient-primary);
+            color: white;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-premium);
+            border: none;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-premium:active {
+            transform: scale(0.95);
+        }
+
+        .btn-gold {
+            background: var(--gradient-gold);
+            color: hsl(var(--accent-foreground));
+            font-weight: 600;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-gold);
+            border: none;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-gold:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Card Styles */
+        .card-premium {
+            background: var(--gradient-card);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid hsl(var(--border-secondary));
+            border-radius: 1rem;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .card-premium:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-1px);
+        }
+
+        /* Mobile Navigation Styles */
+        .nav-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+            color: hsl(var(--muted-foreground));
+            min-height: 60px;
+            min-width: 60px;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .nav-tab:hover {
+            color: hsl(var(--foreground));
+        }
+
+        .nav-tab.active {
+            color: hsl(var(--primary));
+            background-color: hsl(var(--primary) / 0.1);
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .theme-toggle:hover {
+            background-color: hsl(var(--card-secondary));
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle .sun {
+            color: hsl(var(--foreground));
+        }
+
+        .theme-toggle .moon {
+            color: hsl(var(--foreground));
+            position: absolute;
+        }
+
+        /* Feedback Button */
+        .feedback-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: hsl(var(--accent));
+            border: 1px solid hsl(var(--accent));
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            touch-action: manipulation;
+            color: white;
+        }
+
+        .feedback-btn:hover {
+            background-color: hsl(var(--accent-light));
+            transform: scale(1.05);
+        }
+
+        .feedback-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            position: relative;
+            height: 12rem;
+            overflow: hidden;
+            background: var(--gradient-hero);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        /* Investment Overview Grid */
+        .investment-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .investment-item {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .investment-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: hsl(var(--primary));
+            margin-bottom: 0.25rem;
+        }
+
+        .investment-label {
+            font-size: 0.875rem;
+            color: hsl(var(--muted-foreground));
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .card-premium {
+                box-shadow: var(--shadow-md);
+            }
+            
+            .btn-premium, .btn-gold {
+                font-size: 0.875rem;
+                padding: 0.625rem 1rem;
+            }
+
+            .investment-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Safe Areas */
+        .safe-area-top {
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .safe-area-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Insights Cards */
+        .insight-card {
+            background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--card-secondary)));
+            border: 1px solid hsl(var(--border));
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .insight-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .insight-icon.positive {
+            background: hsl(var(--success) / 0.1);
+            color: hsl(var(--success));
+        }
+
+        .insight-icon.warning {
+            background: hsl(var(--warning) / 0.1);
+            color: hsl(var(--warning));
+        }
+
+        .insight-icon.info {
+            background: hsl(var(--primary) / 0.1);
+            color: hsl(var(--primary));
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-background">
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <div class="absolute top-4 right-4 z-10 flex items-center gap-3">
+                <!-- Feedback Button -->
+                <button class="feedback-btn" onclick="showFeedback()" aria-label="Give feedback">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </button>
+                
+                <!-- Theme Toggle -->
+                <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="text-center">
+                <h1 class="text-2xl font-bold mb-2">Smart Property Analyser Dubai</h1>
+                <p class="text-sm opacity-90">Professional investment analysis for Dubai real estate</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="p-4 pb-20">
+            <!-- Property Analysis Form -->
+            <div id="analyze-tab" class="tab-content active fade-in">
+                <div class="card-premium">
+                    <h2 class="text-xl font-semibold mb-4 text-center">Property Analysis</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Property Type</label>
+                            <select class="w-full p-3 border border-border rounded-lg bg-background text-foreground">
+                                <option>Apartment</option>
+                                <option>Villa</option>
+                                <option>Townhouse</option>
+                                <option>Penthouse</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Property Price (AED)</label>
+                            <input type="number" placeholder="1,500,000" class="w-full p-3 border border-border rounded-lg bg-background text-foreground">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Down Payment (%)</label>
+                            <input type="number" placeholder="25" class="w-full p-3 border border-border rounded-lg bg-background text-foreground">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Monthly Rent (AED)</label>
+                            <input type="number" placeholder="8,000" class="w-full p-3 border border-border rounded-lg bg-background text-foreground">
+                        </div>
+                        
+                        <button class="btn-premium w-full" onclick="showDashboard()">
+                            Analyze Investment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content fade-in">
+                <div class="card-premium mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-center">Investment Overview</h3>
+                    
+                    <div class="investment-grid">
+                        <div class="investment-item">
+                            <div class="investment-value">AED 1,065,000</div>
+                            <div class="investment-label">Total Investment</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">AED 100,000</div>
+                            <div class="investment-label">Equity</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">AED 965,000</div>
+                            <div class="investment-label">Financing (90.6% LTV)</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">AED 7,360</div>
+                            <div class="investment-label">Monthly Revenue</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">AED 1,540</div>
+                            <div class="investment-label">Monthly Expenses (20.9%)</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">AED 5,364</div>
+                            <div class="investment-label">Debt Service</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">AED 456</div>
+                            <div class="investment-label">Net Cash Flow</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">1.1</div>
+                            <div class="investment-label">DSCR</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">9.6%</div>
+                            <div class="investment-label">Gross Yield</div>
+                        </div>
+                        <div class="investment-item">
+                            <div class="investment-value">7.0%</div>
+                            <div class="investment-label">Net Yield</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Expense Breakdown Chart -->
+                <div class="card-premium mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-center">Monthly Expense Breakdown</h3>
+                    <div class="chart-container">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- ROI Analysis -->
+                <div class="card-premium mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-center">ROI Analysis (Yearly)</h3>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-primary/10 rounded-lg">
+                            <div class="text-2xl font-bold text-primary">8.2%</div>
+                            <div class="text-sm text-muted-foreground">Annual ROI</div>
+                        </div>
+                        <div class="text-center p-4 bg-accent/10 rounded-lg">
+                            <div class="text-2xl font-bold text-accent">AED 96K</div>
+                            <div class="text-sm text-muted-foreground">Annual Rent</div>
+                        </div>
+                        <div class="text-center p-4 bg-success/10 rounded-lg">
+                            <div class="text-2xl font-bold text-success">15.3%</div>
+                            <div class="text-sm text-muted-foreground">Cash Flow</div>
+                        </div>
+                        <div class="text-center p-4 bg-warning/10 rounded-lg">
+                            <div class="text-2xl font-bold text-warning">4.2%</div>
+                            <div class="text-sm text-muted-foreground">Appreciation</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Go to Insights Button -->
+                <div class="text-center">
+                    <button class="btn-gold w-full" onclick="showInsights()">
+                        Get Smart Insights & Market Analysis
+                    </button>
+                </div>
+            </div>
+
+            <!-- Insights Tab -->
+            <div id="insights-tab" class="tab-content fade-in">
+                <div class="insight-card">
+                    <div class="insight-icon positive">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">Strong Investment Potential</h4>
+                    <p class="text-muted-foreground mb-3">Based on current market data, this property shows strong fundamentals with above-average rental yields and positive cash flow.</p>
+                    <div class="text-sm text-success font-medium">✓ Recommended Investment</div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-icon info">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">Market Analysis</h4>
+                    <p class="text-muted-foreground mb-3">Dubai Marina area shows 12% annual growth potential with increasing demand from international investors and expatriates.</p>
+                    <div class="text-sm text-primary font-medium">📈 Market Trend: Bullish</div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-icon warning">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">Risk Assessment</h4>
+                    <p class="text-muted-foreground mb-3">Consider interest rate fluctuations and potential regulatory changes in Dubai real estate market. DSCR of 1.1 is acceptable but monitor closely.</p>
+                    <div class="text-sm text-warning font-medium">⚠️ Medium Risk Level</div>
+                </div>
+
+                <div class="insight-card">
+                    <div class="insight-icon positive">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2zm0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-lg font-semibold mb-2">Comparative Analysis</h4>
+                    <p class="text-muted-foreground mb-3">This property outperforms 78% of similar investments in the area based on ROI, cash flow, and appreciation metrics.</p>
+                    <div class="text-sm text-success font-medium">🏆 Top 22% Performance</div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content fade-in">
+                <div class="card-premium">
+                    <h3 class="text-lg font-semibold mb-4 text-center">App Settings</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span>Dark Mode</span>
+                            <button class="theme-toggle" onclick="toggleTheme()">
+                                <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="5"/>
+                                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                                </svg>
+                                <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="text-center text-sm text-muted-foreground">
+                            Dubai Property Investment App v2.0<br>
+                            Mobile Optimized with Smart Insights
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-bottom">
+            <div class="flex justify-around py-2">
+                <div class="nav-tab active" onclick="showTab('analyze')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9,22 9,12 15,12 15,22"/>
+                    </svg>
+                    <span class="text-xs">Analyze</span>
+                </div>
+                <div class="nav-tab" onclick="showTab('dashboard')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z"/>
+                    </svg>
+                    <span class="text-xs">Dashboard</span>
+                </div>
+                <div class="nav-tab" onclick="showTab('insights')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    <span class="text-xs">Insights</span>
+                </div>
+                <div class="nav-tab" onclick="showTab('settings')">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
+                    </svg>
+                    <span class="text-xs">Settings</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle Functionality
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.classList.contains('dark');
+            
+            if (isDark) {
+                body.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Initialize theme from localStorage
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark');
+            } else {
+                document.body.classList.remove('dark');
+            }
+        }
+
+        // Tab Navigation
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked nav tab
+            event.currentTarget.classList.add('active');
+        }
+
+        // Show Dashboard
+        function showDashboard() {
+            showTab('dashboard');
+            initExpenseChart();
+        }
+
+        // Show Insights
+        function showInsights() {
+            showTab('insights');
+        }
+
+        // Show Feedback Modal
+        function showFeedback() {
+            const feedback = prompt('We waarderen je feedback! Laat ons weten wat je vindt van de app:');
+            if (feedback) {
+                alert('Bedankt voor je feedback! We nemen het mee in toekomstige updates.');
+            }
+        }
+
+        // Initialize Expense Chart
+        function initExpenseChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mortgage Payment', 'Property Management', 'Insurance', 'Maintenance', 'Utilities', 'Other'],
+                    datasets: [{
+                        data: [5364, 800, 200, 300, 150, 90],
+                        backgroundColor: [
+                            'hsl(221 83% 53%)',
+                            'hsl(43 96% 56%)',
+                            'hsl(142 76% 36%)',
+                            'hsl(38 92% 50%)',
+                            'hsl(180 84% 35%)',
+                            'hsl(0 84% 60%)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: 'hsl(var(--background))'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'hsl(var(--foreground))',
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            
+            // Add touch feedback
+            document.querySelectorAll('button, .nav-tab').forEach(element => {
+                element.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                
+                element.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

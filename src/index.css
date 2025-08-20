@@ -2,152 +2,170 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dubai Property Investment App - Premium Design System
-All colors MUST be HSL. Premium gradients and luxury aesthetic.
+/* Dubai Property Investment App - Mobile Optimized Design System
+Optimized colors for mobile devices with better contrast and readability
 */
 
 @layer base {
   :root {
-    /* Dubai Luxury Color Palette - Darker Theme */
-    --background: 215 25% 14%;
-    --background-secondary: 215 22% 16%;
-    --foreground: 210 40% 95%;
-
-    /* Card System */
-    --card: 215 22% 18%;
-    --card-secondary: 215 20% 20%;
-    --card-premium: 215 18% 22%;
-    --card-foreground: 210 40% 95%;
+    /* Mobile Optimized Design System - Light Mode */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 98%;
+    --card-secondary: 0 0% 96%;
+    --foreground-secondary: 240 5% 34%;
+    
+    /* Primary - Darker Blue for Light Mode */
+    --primary: 217 91% 40%; /* Darker blue */
+    --primary-foreground: 0 0% 98%;
+    --primary-light: 217 91% 50%; /* Slightly lighter but still dark */
+    --primary-dark: 217 91% 30%; /* Even darker for contrast */
+    
+    /* Secondary - Adjusted for better visibility */
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    
+    /* Accent - Darker Blue */
+    --accent: 217 91% 45%; /* Darker blue accent */
+    --accent-foreground: 0 0% 98%;
+    --accent-light: 217 91% 55%; /* Slightly lighter accent */
+    
+    /* Success, Warning, Danger - Adjusted for light mode */
+    --success: 142 76% 36%; /* Darker green */
+    --success-foreground: 0 0% 98%;
+    --success-light: 142 76% 46%;
+    
+    --warning: 38 92% 50%; /* Darker orange */
+    --warning-foreground: 0 0% 98%;
+    --warning-light: 38 92% 60%;
+    
+    --danger: 0 84% 60%; /* Darker red */
+    --danger-foreground: 0 0% 98%;
+    --danger-light: 0 84% 70%;
+    
+    /* Purple for Run Analysis button */
+    --purple: 262 83% 58%;
+    --purple-foreground: 0 0% 98%;
+    --purple-light: 262 83% 68%;
+    --purple-dark: 262 83% 48%;
+    
+    /* Green for Next button */
+    --green: 142 76% 36%;
+    --green-foreground: 0 0% 98%;
+    --green-light: 142 76% 46%;
+    
+    /* Muted and Border - Adjusted for light mode */
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 217 91% 40%; /* Darker blue ring */
+    
+    /* Gradients - Adjusted for light mode */
+    --gradient-primary: linear-gradient(135deg, hsl(217, 91%, 40%) 0%, hsl(217, 91%, 50%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(217, 91%, 40%) 0%, hsl(217, 91%, 60%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(217, 91%, 45%) 0%, hsl(217, 91%, 55%) 100%);
+     
+     /* Text Gradients - Less transparent for better readability */
+     --text-gradient-primary: linear-gradient(135deg, hsl(217, 91%, 35%) 0%, hsl(217, 91%, 45%) 100%);
+     --text-gradient-accent: linear-gradient(135deg, hsl(217, 91%, 40%) 0%, hsl(217, 91%, 50%) 100%);
+     
+     /* Additional Gradients */
+     --gradient-premium: linear-gradient(135deg, hsl(217, 91%, 30%) 0%, hsl(217, 91%, 40%) 100%);
+     --gradient-gold: linear-gradient(135deg, hsl(43 96% 56%), hsl(43 96% 62%));
+     --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 42%));
+     --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
 
     /* Popover */
-    --popover: 215 22% 18%;
-    --popover-foreground: 210 40% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 84% 4.9%;
 
-    /* Primary - Deep Blue */
-    --primary: 213 94% 68%;
-    --primary-dark: 214 84% 56%;
-    --primary-darker: 215 84% 46%;
-    --primary-foreground: 0 0% 100%;
+    /* Mobile Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-premium: 0 25px 50px -12px hsl(221 83% 53% / 0.25);
+    --shadow-gold: 0 10px 30px -10px hsl(43 96% 56% / 0.3);
 
-    /* Secondary - Teal */
-    --secondary: 185 84% 39%;
-    --secondary-light: 185 77% 47%;
-    --secondary-foreground: 0 0% 100%;
-
-    /* Accent - Dubai Gold */
-    --accent: 45 93% 47%;
-    --accent-light: 48 96% 53%;
-    --accent-foreground: 215 25% 27%;
-
-    /* Success - Emerald */
-    --success: 158 64% 52%;
-    --success-light: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
-
-    /* Warning - Amber */
-    --warning: 32 95% 44%;
-    --warning-light: 38 92% 50%;
-    --warning-foreground: 215 25% 27%;
-
-    /* Danger - Red */
-    --danger: 0 84% 60%;
-    --danger-light: 0 91% 71%;
-    --danger-foreground: 0 0% 100%;
-
-    /* Muted tones */
-    --muted: 215 20% 25%;
-    --muted-foreground: 215 16% 65%;
-    --muted-dark: 215 14% 35%;
-
-    /* Border and Input */
-    --border: 215 20% 30%;
-    --border-secondary: 215 18% 32%;
-    --input: 215 20% 25%;
-    --ring: 213 94% 68%;
-
-    /* Premium Gradients - Darker */
-    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(185 84% 39%));
-    --gradient-premium: linear-gradient(135deg, hsl(215 84% 46%), hsl(213 94% 68%));
-    --gradient-gold: linear-gradient(135deg, hsl(45 93% 47%), hsl(48 96% 53%));
-    --gradient-success: linear-gradient(135deg, hsl(158 64% 52%), hsl(160 84% 39%));
-    --gradient-card: linear-gradient(145deg, hsl(215 22% 18%), hsl(215 20% 20%));
-    --gradient-hero: linear-gradient(135deg, hsl(215 25% 14%) 0%, hsl(215 84% 46%) 50%, hsl(185 84% 39%) 100%);
-
-    /* Premium Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(215 25% 27% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(215 25% 27% / 0.1), 0 2px 4px -1px hsl(215 25% 27% / 0.06);
-    --shadow-lg: 0 10px 15px -3px hsl(215 25% 27% / 0.1), 0 4px 6px -2px hsl(215 25% 27% / 0.05);
-    --shadow-xl: 0 20px 25px -5px hsl(215 25% 27% / 0.1), 0 10px 10px -5px hsl(215 25% 27% / 0.04);
-    --shadow-premium: 0 25px 50px -12px hsl(213 94% 68% / 0.25);
-    --shadow-gold: 0 10px 30px -10px hsl(45 93% 47% / 0.3);
-
-    /* Animations */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Mobile Animations */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
     --radius: 0.75rem;
 
+    /* Sidebar - Light Mode */
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-foreground: 222 84% 4.9%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 84% 4.9%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
-    /* Dark mode with Dubai night aesthetic */
-    --background: 215 28% 17%;
-    --background-secondary: 215 25% 20%;
+    /* Dark Mode - Mobile Optimized */
+    --background: 222 84% 4.9%;
+    --background-secondary: 222 84% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 215 25% 20%;
-    --card-secondary: 215 22% 22%;
-    --card-premium: 215 20% 25%;
+    --card: 222 84% 6%;
+    --card-secondary: 222 84% 8%;
+    --card-premium: 222 84% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 215 25% 20%;
+    --popover: 222 84% 6%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 213 94% 68%;
-    --primary-dark: 214 84% 56%;
-    --primary-darker: 215 84% 46%;
+    --primary: 221 83% 53%;
+    --primary-dark: 221 83% 45%;
+    --primary-darker: 221 83% 37%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 185 84% 39%;
-    --secondary-light: 185 77% 47%;
+    --secondary: 180 84% 35%;
+    --secondary-light: 180 84% 42%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 215 25% 25%;
-    --muted-foreground: 215 20% 65%;
-    --muted-dark: 215 25% 35%;
+    /* Purple for Run Analysis button - Dark Mode */
+    --purple: 262 83% 68%;
+    --purple-foreground: 0 0% 98%;
+    --purple-light: 262 83% 78%;
+    --purple-dark: 262 83% 58%;
 
-    --border: 215 25% 28%;
-    --border-secondary: 215 22% 32%;
-    --input: 215 25% 28%;
-    --ring: 213 94% 68%;
+    /* Green for Next button - Dark Mode */
+    --green: 142 76% 46%;
+    --green-foreground: 0 0% 98%;
+    --green-light: 142 76% 56%;
+
+    --muted: 222 84% 8%;
+    --muted-foreground: 215 20% 65%;
+    --muted-dark: 222 84% 12%;
+
+    --border: 222 84% 12%;
+    --border-secondary: 222 84% 16%;
+    --input: 222 84% 12%;
+    --ring: 221 83% 53%;
 
     /* Dark mode gradients */
-    --gradient-card: linear-gradient(145deg, hsl(215 25% 20%), hsl(215 22% 22%));
-    --gradient-hero: linear-gradient(135deg, hsl(215 28% 17%) 0%, hsl(215 84% 46%) 50%, hsl(185 84% 39%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 84% 6%), hsl(222 84% 8%));
+    --gradient-hero: linear-gradient(135deg, hsl(222 84% 4.9%) 0%, hsl(221 83% 53%) 50%, hsl(180 84% 35%) 100%);
+    
+    /* Dark mode text gradients - More opaque for better readability */
+    --text-gradient-primary: linear-gradient(135deg, hsl(221, 83%, 60%) 0%, hsl(221, 83%, 70%) 100%);
+    --text-gradient-accent: linear-gradient(135deg, hsl(221, 83%, 65%) 0%, hsl(221, 83%, 75%) 100%);
 
-    --sidebar-background: 215 28% 17%;
+    /* Sidebar - Dark Mode */
+    --sidebar-background: 222 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 213 94% 68%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 25% 25%;
+    --sidebar-accent: 222 84% 8%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 25% 28%;
-    --sidebar-ring: 213 94% 68%;
+    --sidebar-border: 222 84% 12%;
+    --sidebar-ring: 221 83% 53%;
   }
 }
 
@@ -159,92 +177,184 @@ All colors MUST be HSL. Premium gradients and luxury aesthetic.
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    /* Mobile optimizations */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   html {
     scroll-behavior: smooth;
+    /* Mobile viewport optimization */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Mobile touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mobile scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
   }
 }
 
 @layer components {
-  /* Premium Button Variants */
+  /* Mobile Optimized Button Variants */
   .btn-premium {
     @apply bg-gradient-to-r from-primary to-secondary text-white font-semibold;
-    @apply hover:shadow-premium transition-all duration-300;
-    @apply active:scale-95;
+    @apply hover:shadow-premium transition-all duration-200;
+    @apply active:scale-95 touch-manipulation;
+    @apply rounded-xl px-6 py-3 text-base;
+  }
+
+  .btn-purple {
+    @apply bg-purple text-purple-foreground font-semibold;
+    @apply hover:bg-purple-light transition-all duration-200;
+    @apply active:scale-95 touch-manipulation;
+    @apply rounded-xl px-6 py-3 text-base;
+  }
+
+  .btn-green {
+    @apply bg-green text-green-foreground font-semibold;
+    @apply hover:bg-green-light transition-all duration-200;
+    @apply active:scale-95 touch-manipulation;
+    @apply rounded-xl px-6 py-3 text-base;
   }
 
   .btn-gold {
     @apply bg-gradient-to-r from-accent to-accent-light text-accent-foreground font-semibold;
-    @apply hover:shadow-gold transition-all duration-300;
-    @apply active:scale-95;
+    @apply hover:shadow-gold transition-all duration-200;
+    @apply active:scale-95 touch-manipulation;
+    @apply rounded-xl px-6 py-3 text-base;
   }
 
   .btn-success {
     @apply bg-gradient-to-r from-success to-success-light text-success-foreground font-semibold;
-    @apply transition-all duration-300 active:scale-95;
+    @apply transition-all duration-200 active:scale-95 touch-manipulation;
+    @apply rounded-xl px-6 py-3 text-base;
   }
 
-  /* Premium Card Styles */
+  /* Mobile Card Styles */
   .card-premium {
     @apply bg-gradient-to-br from-card to-card-premium;
-    @apply shadow-lg hover:shadow-xl transition-all duration-300;
-    @apply border border-border-secondary;
+    @apply shadow-lg hover:shadow-xl transition-all duration-200;
+    @apply border border-border-secondary rounded-2xl;
+    @apply p-4 sm:p-6;
   }
 
   .card-floating {
-    @apply card-premium hover:-translate-y-1;
+    @apply card-premium hover:-translate-y-1 active:translate-y-0;
   }
 
-  /* Investment Metric Cards */
+  /* Mobile Investment Metric Cards */
   .metric-card {
-    @apply card-premium p-6 text-center;
+    @apply card-premium p-4 sm:p-6 text-center border-2 transition-all duration-300 hover:shadow-lg;
   }
 
   .metric-value {
-    @apply text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+    @apply text-2xl sm:text-3xl font-bold;
   }
 
   .metric-label {
     @apply text-sm text-muted-foreground font-medium mt-2;
   }
 
-  /* Navigation Styles */
+  /* Mobile Navigation Styles */
   .nav-tab {
     @apply flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200;
-    @apply text-muted-foreground hover:text-foreground;
+    @apply text-muted-foreground hover:text-foreground active:text-primary;
+    @apply min-h-[60px] min-w-[60px] justify-center;
   }
 
   .nav-tab.active {
     @apply text-primary bg-primary/10;
   }
 
-  /* Form Styles */
+  /* Mobile Form Styles */
   .form-step {
-    @apply card-premium p-6 space-y-6 animate-in fade-in-50 slide-in-from-bottom-4 duration-300;
+    @apply card-premium p-4 sm:p-6 space-y-4 sm:space-y-6;
+    @apply animate-in fade-in-50 slide-in-from-bottom-4 duration-200;
   }
 
-  /* Dubai Luxury Animations */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
+  /* Mobile Touch Feedback */
+  .touch-feedback {
+    @apply active:scale-95 transition-transform duration-100;
   }
 
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
+  /* Mobile Safe Areas */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
   }
 
-  .animate-slide-up {
-    animation: slide-up 0.5s ease-out;
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Loading Animation */
+  .loading-spinner {
+    @apply inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin;
+  }
+
+  .loading-overlay {
+    @apply fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center;
+  }
+
+  .loading-content {
+    @apply bg-card border border-border rounded-2xl p-8 text-center shadow-xl;
+  }
+
+  .loading-text {
+    @apply text-lg font-semibold text-foreground mb-4;
+  }
+
+  .loading-subtext {
+    @apply text-muted-foreground text-sm;
   }
 }
 
 @layer utilities {
   .text-gradient-primary {
-    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+    background: var(--text-gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: hsl(var(--primary));
+    /* Fallback for better readability */
+    text-shadow: 0 0 1px hsl(var(--primary) / 0.3);
+  }
+
+  .text-gradient-accent {
+    background: var(--text-gradient-accent);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: hsl(var(--accent));
   }
 
   .text-gradient-gold {
-    @apply bg-gradient-to-r from-accent to-accent-light bg-clip-text text-transparent;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: hsl(var(--accent));
   }
 
   .bg-gradient-hero {
@@ -262,34 +372,61 @@ All colors MUST be HSL. Premium gradients and luxury aesthetic.
   .shadow-gold {
     box-shadow: var(--shadow-gold);
   }
+
+  /* Mobile specific utilities */
+  .mobile-tap-highlight {
+    -webkit-tap-highlight-color: hsl(var(--primary) / 0.2);
+  }
+
+  .mobile-safe-area {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
 }
 
-/* Custom Keyframes */
+/* Mobile Optimized Keyframes */
 @keyframes float {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
 }
 
 @keyframes glow {
   from {
-    filter: drop-shadow(0 0 5px hsl(213 94% 68% / 0.5));
+    filter: drop-shadow(0 0 3px hsl(221 83% 53% / 0.4));
   }
   to {
-    filter: drop-shadow(0 0 20px hsl(213 94% 68% / 0.8));
+    filter: drop-shadow(0 0 15px hsl(221 83% 53% / 0.6));
   }
 }
 
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+
+
+/* Mobile media queries for better performance */
+@media (max-width: 768px) {
+  .card-premium {
+    @apply shadow-md;
+  }
+  
+  .btn-premium, .btn-gold, .btn-success {
+    @apply text-sm px-4 py-2.5;
+  }
+  
+  .metric-value {
+    @apply text-xl;
   }
 }

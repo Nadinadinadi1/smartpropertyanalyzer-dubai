@@ -10,12 +10,12 @@ import {
   Settings, 
   DollarSign, 
   Calculator, 
-  Download,
   Sun,
   Moon,
   Bell,
   Globe
 } from 'lucide-react';
+
 
 interface SettingsData {
   currency: string;
@@ -57,15 +57,48 @@ export default function SettingsPanel() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-6 pb-20">
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center mb-2">
-          <Settings className="h-6 w-6 text-primary mr-2" />
-          <h1 className="text-2xl font-bold text-gradient-primary">Settings</h1>
+    <>
+      <div className="h-full overflow-y-auto p-4 space-y-6 pb-20">
+        {/* Logo and Theme Toggle */}
+        <div className="absolute top-4 left-4 z-10">
+          <button
+            onClick={() => window.location.hash = '#analyze'}
+            className="relative hover:scale-105 transition-transform duration-200"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            </div>
+            {/* BETA Badge */}
+            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md border border-white">
+              BETA
+            </div>
+          </button>
         </div>
-        <p className="text-muted-foreground">Customize your investment calculator</p>
-      </div>
+
+        {/* Theme Toggle - Top Right */}
+        <div className="absolute top-4 right-4 z-10">
+          <button
+            onClick={() => {
+              // Toggle theme logic here
+              document.documentElement.classList.toggle('dark');
+            }}
+            className="w-10 h-10 bg-card/80 backdrop-blur-sm border border-border rounded-xl flex items-center justify-center shadow-md hover:bg-card transition-colors"
+          >
+            <Sun className="h-5 w-5 text-primary dark:hidden" />
+            <Moon className="h-5 w-5 text-primary hidden dark:block" />
+          </button>
+        </div>
+
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex items-center justify-center mb-2">
+            <Settings className="h-6 w-6 text-primary mr-2" />
+            <h1 className="text-2xl font-bold text-gradient-primary">Settings</h1>
+          </div>
+          <p className="text-muted-foreground">Customize your investment calculator</p>
+        </div>
 
       {/* Currency & Display */}
       <Card className="card-premium p-6">
@@ -225,25 +258,20 @@ export default function SettingsPanel() {
         </div>
       </Card>
 
-      {/* Export & Data */}
+      {/* Data Management */}
       <Card className="card-premium p-6">
         <div className="flex items-center mb-4">
-          <Download className="h-5 w-5 text-success mr-2" />
-          <h3 className="font-semibold">Export & Data</h3>
+          <Globe className="h-5 w-5 text-success mr-2" />
+          <h3 className="font-semibold">Data Management</h3>
         </div>
         <div className="space-y-4">
-          <Button className="btn-premium w-full">
-            <Download className="h-4 w-4 mr-2" />
-            Export Analysis as PDF
-          </Button>
-          
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-2">
-              Save your calculations and access them anywhere
+              Manage your investment data and preferences
             </p>
             <Button variant="outline" className="w-full">
               <Globe className="h-4 w-4 mr-2" />
-              Sync Data to Cloud
+              Sync Settings to Cloud
             </Button>
           </div>
         </div>
@@ -260,6 +288,7 @@ export default function SettingsPanel() {
           <p>© 2024 Property Investment Tools</p>
         </div>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }
