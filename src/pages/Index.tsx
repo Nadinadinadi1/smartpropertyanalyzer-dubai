@@ -55,31 +55,41 @@ const Index = () => {
       }
     };
 
-             const handleNavigateToAnalyze = (event: CustomEvent) => {
-           if (event.detail?.targetTab === 'analyze') {
-             setActiveTab('analyze');
-             // Scroll to top when navigating to analyze
-             window.scrollTo({ top: 0, behavior: 'smooth' });
-           }
-         };
+    const handleNavigateToAnalyze = (event: CustomEvent) => {
+      if (event.detail?.targetTab === 'analyze') {
+        setActiveTab('analyze');
+        // Scroll to top when navigating to analyze
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
 
-         const handleNavigateToJourney = (event: CustomEvent) => {
-           if (event.detail?.targetTab === 'journey') {
-             setActiveTab('journey');
-             // Scroll to top when navigating to journey
-             window.scrollTo({ top: 0, behavior: 'smooth' });
-           }
-         };
+    const handleNavigateToAnalyses = (event: CustomEvent) => {
+      if (event.detail?.targetTab === 'analyses') {
+        setActiveTab('analyses');
+        // Scroll to top when navigating to analyses
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
 
-             window.addEventListener('navigateToInsights', handleNavigateToInsights as EventListener);
-         window.addEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
-         window.addEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
+    const handleNavigateToJourney = (event: CustomEvent) => {
+      if (event.detail?.targetTab === 'journey') {
+        setActiveTab('journey');
+        // Scroll to top when navigating to journey
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    window.addEventListener('navigateToInsights', handleNavigateToInsights as EventListener);
+    window.addEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
+    window.addEventListener('navigateToAnalyses', handleNavigateToAnalyses as EventListener);
+    window.addEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
     
-             return () => {
-           window.removeEventListener('navigateToInsights', handleNavigateToInsights as EventListener);
-           window.removeEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
-           window.removeEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
-         };
+    return () => {
+      window.removeEventListener('navigateToInsights', handleNavigateToInsights as EventListener);
+      window.removeEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
+      window.removeEventListener('navigateToAnalyses', handleNavigateToAnalyses as EventListener);
+      window.removeEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
+    };
   }, []);
 
   // Auto-scroll to top when tab changes
@@ -90,7 +100,7 @@ const Index = () => {
   const handleAnalyze = (data: PropertyData) => {
     setPropertyData(data);
     setShowResults(true);
-    setActiveTab('dashboard');
+    setActiveTab('analyses');
     // Scroll to top when analysis results are shown
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -133,7 +143,7 @@ const Index = () => {
       );
     }
     
-    if (activeTab === 'dashboard') {
+    if (activeTab === 'analyses') {
       if (!propertyData || !showResults) {
         return (
           <div className="h-full flex items-center justify-center p-8">
@@ -210,26 +220,56 @@ const Index = () => {
     <div className="min-h-screen bg-background">
 
       
-      {/* Hero Section - Only show on analyze tab when no results */}
-      {activeTab === 'analyze' && !showResults && (
-        <div className="relative h-48 overflow-hidden mt-20">
+      {/* Hero Section - Show on analyze tab (Property Input) */}
+      {activeTab === 'analyze' && (
+        <div className="relative h-80 overflow-hidden mt-20">
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${dubaiHeroImage})` }}
           />
           <div className="absolute inset-0 bg-gradient-hero opacity-90" />
           
-          <div className="relative h-full flex items-center justify-center text-white p-6">
+          {/* Main Hero Text - Centered with more space */}
+          <div className="relative z-10 h-full flex items-center justify-center text-white p-6 pb-20">
             <div className="text-center">
-              <h1 className="text-2xl font-bold mb-2">Smart Property Analyzer Dubai</h1>
-              <p className="text-sm opacity-90">Professional investment analysis for Dubai real estate</p>
+              <h1 className="text-2xl font-bold mb-3 text-white drop-shadow-lg">Smart Property Analyzer Dubai</h1>
+              <p className="text-sm opacity-95 text-white drop-shadow-md">Professional investment analysis for Dubai real estate</p>
+            </div>
+          </div>
+
+          {/* Investment Journey Simulator Banner - Overlay on Hero - Positioned lower */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-80 px-3 z-20">
+            <div className="p-3 bg-gradient-to-r from-blue-100/90 to-blue-200/90 dark:from-blue-50/80 dark:to-blue-100/80 border border-blue-300/50 rounded-lg backdrop-blur-sm shadow-lg">
+              <div className="text-center">
+                <h3 className="text-xs font-bold text-blue-800 dark:text-blue-700 mb-1">
+                  🚀 New Investment Journey Simulator
+                </h3>
+                <p className="text-xs text-blue-700 dark:text-blue-600 mb-2">
+                  Curious about your investment potential? Try our guided journey first for instant insights!
+                </p>
+                <Button
+                  onClick={() => {
+                    // Navigate to journey tab
+                    window.location.hash = '#journey';
+                    // Dispatch event to trigger tab change
+                    const journeyEvent = new CustomEvent('navigateToJourney', {
+                      detail: { targetTab: 'journey' }
+                    });
+                    window.dispatchEvent(journeyEvent);
+                  }}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs h-6"
+                >
+                  Start Journey
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Main Content */}
-      <div className={`${activeTab === 'analyze' && !showResults ? 'min-h-[calc(100vh-12rem)]' : 'min-h-screen'} pb-16`}>
+      <div className={`${activeTab === 'analyze' ? 'min-h-[calc(100vh-20rem)]' : 'min-h-screen'} pb-16`}>
         {renderTabContent()}
       </div>
 

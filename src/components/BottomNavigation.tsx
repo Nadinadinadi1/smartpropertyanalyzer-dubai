@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator, BarChart3, Lightbulb, Settings, Play } from 'lucide-react';
+import { Calculator, BarChart3, Lightbulb, Settings, Play, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BottomNavigationProps {
@@ -8,11 +8,11 @@ interface BottomNavigationProps {
 }
 
 const tabs = [
-  { id: 'journey', icon: Play, label: 'Journey' },
-  { id: 'analyze', icon: Calculator, label: 'Analyze' },
-  { id: 'dashboard', icon: BarChart3, label: 'Analyses' },
-  { id: 'insights', icon: Lightbulb, label: 'Insights' },
-  { id: 'settings', icon: Settings, label: 'Settings' },
+  { id: 'journey', label: 'Journey', icon: Play },
+  { id: 'analyze', label: 'Property Input', icon: Calculator },
+  { id: 'analyses', label: 'Analyses', icon: BarChart3 },
+  { id: 'insights', label: 'Insights', icon: TrendingUp },
+  { id: 'settings', label: 'Settings', icon: Settings }
 ];
 
 export default function BottomNavigation({ activeTab, onTabChange }: BottomNavigationProps) {

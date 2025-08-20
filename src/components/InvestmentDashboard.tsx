@@ -292,6 +292,53 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6 pb-20">
+      {/* Vertical Floating Navigation */}
+      <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
+        <div className="bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-full p-2 shadow-lg border border-gray-200/20 dark:border-gray-700/20 transition-all duration-300 hover:bg-white/90 dark:hover:bg-gray-800/90 hover:border-gray-300/60 dark:hover:border-gray-600/60">
+          <nav className="flex flex-col space-y-3">
+            <button
+              onClick={() => document.getElementById('investment-overview')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-12 h-12 rounded-full bg-blue-100/40 dark:bg-blue-900/20 hover:bg-blue-200/80 dark:hover:bg-blue-800/60 flex items-center justify-center transition-all duration-200 hover:scale-110 group"
+              title="Investment Overview"
+            >
+              <Home className="w-5 h-5 text-blue-600/70 dark:text-blue-400/70 group-hover:text-blue-700 dark:group-hover:text-blue-300" />
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('key-metrics')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-12 h-12 rounded-full bg-green-100/40 dark:bg-green-900/20 hover:bg-green-200/80 dark:hover:bg-green-800/60 flex items-center justify-center transition-all duration-200 hover:scale-110 group"
+              title="Key Metrics"
+            >
+              <Target className="w-5 h-5 text-green-600/70 dark:text-green-400/70 group-hover:text-green-700 dark:group-hover:text-green-300" />
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('wealth-projection')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-12 h-12 rounded-full bg-purple-100/40 dark:bg-purple-900/20 hover:bg-purple-200/80 dark:hover:bg-purple-800/60 flex items-center justify-center transition-all duration-200 hover:scale-110 group"
+              title="10-Year Wealth Projection"
+            >
+              <TrendingUp className="w-5 h-5 text-purple-600/70 dark:text-purple-400/70 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('monthly-expenses')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-12 h-12 rounded-full bg-orange-100/40 dark:bg-orange-900/20 hover:bg-orange-200/80 dark:hover:bg-orange-800/60 flex items-center justify-center transition-all duration-200 hover:scale-110 group"
+              title="Monthly Expenses Breakdown"
+            >
+              <PieChart className="w-5 h-5 text-orange-600/70 dark:text-orange-400/70 group-hover:text-orange-700 dark:group-hover:text-orange-300" />
+            </button>
+            
+            <button
+              onClick={() => document.getElementById('investment-score')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-12 h-12 rounded-full bg-indigo-100/40 dark:bg-indigo-900/20 hover:bg-indigo-200/80 dark:hover:bg-indigo-800/60 flex items-center justify-center transition-all duration-200 hover:scale-110 group"
+              title="Investment Score"
+            >
+              <Calculator className="w-5 h-5 text-indigo-600/70 dark:text-indigo-400/70 group-hover:text-indigo-700 dark:group-hover:text-indigo-300" />
+            </button>
+          </nav>
+        </div>
+      </div>
+
       {/* Logo and Theme Toggle */}
         <div className="absolute top-4 left-4 z-10">
         <button
@@ -397,7 +444,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       </Card>
 
       {/* 10-Year Wealth Projection - MOVED UP (Feiten eerst) */}
-      <Card className="card-premium p-6">
+      <Card id="wealth-projection" className="card-premium p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <TrendingUp className="h-5 w-5 text-primary mr-2" />
@@ -504,7 +551,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       </Card>
 
       {/* Monthly Expense Breakdown - MOVED UP (Feiten eerst) */}
-      <Card className="card-premium p-6">
+      <Card id="monthly-expenses" className="card-premium p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <PieChart className="h-5 w-5 text-primary mr-2" />
@@ -632,7 +679,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       </Card>
 
       {/* Investment Score */}
-      <Card className="card-floating p-6 text-center bg-gradient-hero text-white">
+      <Card id="investment-score" className="card-floating p-6 text-center bg-gradient-hero text-white">
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className="text-center">
             <div className="text-4xl font-bold mb-1">{investmentScore}/10</div>
@@ -763,7 +810,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       </Card>
 
       {/* Key Metrics Grid */}
-      <Card className="card-premium p-4">
+      <Card id="key-metrics" className="card-premium p-4">
 
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
@@ -1283,7 +1330,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       
 
       {/* Investment Overview - Enhanced */}
-      <Card className="card-premium p-6">
+      <Card id="investment-overview" className="card-premium p-6">
         <div className="flex items-center justify-between mb-6">
            <div>
           <h3 className="font-semibold text-lg">Investment Overview</h3>

@@ -12,6 +12,7 @@ import { ArrowLeft, ArrowRight, Home, MapPin, Calculator, Building, TrendingUp, 
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Toaster } from 'sonner';
+import dubaiHeroImage from '@/assets/dubai-skyline-hero.jpg';
 
 
 interface PropertyData {
@@ -241,33 +242,8 @@ export default function PropertyAnalyzer({ onAnalyze }: PropertyAnalyzerProps) {
           </button>
         </div>
 
-        {/* Progress Header with Journey Banner */}
+        {/* Progress Header */}
         <div className="bg-gradient-hero p-4 text-white">
-          {/* Journey Simulator Banner - Compact - Only show on first step */}
-          {currentStep === 1 && (
-            <div className="mb-4 p-3 bg-blue-100/80 dark:bg-blue-50/80 rounded-lg border border-blue-200/60 shadow-lg">
-              <div className="text-center">
-                <h3 className="text-lg font-bold text-blue-800 dark:text-blue-700 mb-2">
-                  🚀 New: Investment Journey Simulator
-                </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-600 mb-3 max-w-2xl mx-auto">
-                  Curious about your investment potential? Try our guided journey first for instant insights!
-                </p>
-                <Button
-                  onClick={() => {
-                    // Dispatch custom event to navigate to journey tab
-                    window.dispatchEvent(new CustomEvent('navigateToJourney', { 
-                      detail: { targetTab: 'journey' } 
-                    }));
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                >
-                  🎮 Start Journey
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Steps Progress */}
           <div className="flex items-center justify-center mb-3">
             <div className="text-center">
