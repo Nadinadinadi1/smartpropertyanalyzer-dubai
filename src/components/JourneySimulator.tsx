@@ -182,6 +182,7 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
   const [analysisScore, setAnalysisScore] = useState(0);
   const [showQuickStart, setShowQuickStart] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
+  const [quickStartApplied, setQuickStartApplied] = useState<string | null>(null);
 
   const currentStepData = journeySteps.find(step => step.id === currentStep);
 
@@ -198,14 +199,16 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
   };
 
   const applyQuickStart = (preset: typeof quickStartPresets[0]) => {
+    console.log('Applying Quick Start preset:', preset.name, preset.data); // Debug log
     setJourneyData(preset.data);
     setCurrentStep(1); // Start from beginning to review all data
+    setQuickStartApplied(preset.name); // Show success message
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    // Show a brief success message
+    // Clear success message after 3 seconds
     setTimeout(() => {
-      // You could add a toast notification here
-    }, 100);
+      setQuickStartApplied(null);
+    }, 3000);
   };
 
   const nextStep = () => {
@@ -649,6 +652,19 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
 
         {/* Quick Start Presets */}
         <Card className="p-6 mb-6 bg-gradient-to-r from-blue-50/80 to-indigo-100/80 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200/60 dark:border-blue-800/40 shadow-lg">
+          {/* Success Message */}
+          {quickStartApplied && (
+            <div className="mb-4 p-4 bg-green-100/80 dark:bg-green-900/40 rounded-lg border border-green-300/60 dark:border-green-600/40">
+              <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-300">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <span className="font-semibold">
+                  ✅ "{quickStartApplied}" preset applied successfully! 
+                  All fields have been filled in. You can now review and customize the data.
+                </span>
+              </div>
+            </div>
+          )}
+          
           <h3 className="text-xl font-bold text-center mb-4 text-blue-800 dark:text-blue-200">
             🚀 Quick Start Options
           </h3>
@@ -822,6 +838,17 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
           <h3 className="text-lg font-semibold mb-4 text-center text-green-800 dark:text-green-200">
             📊 Quick Preview
           </h3>
+          
+          {/* Highlight when Quick Start was applied */}
+          {quickStartApplied && (
+            <div className="mb-4 p-3 bg-blue-100/60 dark:bg-blue-900/30 rounded-lg border border-blue-300/40 dark:border-blue-600/40">
+              <div className="flex items-center justify-center gap-2 text-blue-700 dark:text-blue-300 text-sm">
+                <Info className="h-4 w-4" />
+                <span>Quick Start preset "<strong>{quickStartApplied}</strong>" is active</span>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center mb-4">
             <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3 border border-green-200/40 dark:border-green-700/40">
               <div className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">
