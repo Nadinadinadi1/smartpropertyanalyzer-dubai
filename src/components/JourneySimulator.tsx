@@ -22,7 +22,14 @@ import {
   CheckCircle,
   Play,
   Pause,
-  RotateCcw
+  RotateCcw,
+  SkipForward,
+  Home as HomeIcon,
+  Info,
+  Share2,
+  TrendingUp as TrendingUpIcon,
+  Users,
+  Timer
 } from 'lucide-react';
 
 interface JourneyData {
@@ -45,6 +52,8 @@ interface JourneyStep {
   max?: number;
   step?: number;
   placeholder?: string;
+  tooltip?: string;
+  estimatedTime?: number;
 }
 
 const journeySteps: JourneyStep[] = [
@@ -54,7 +63,9 @@ const journeySteps: JourneyStep[] = [
     description: 'What type of property are you looking for?',
     icon: Building,
     inputType: 'select',
-    options: ['Apartment', 'Villa', 'Townhouse', 'Studio', 'Penthouse']
+    options: ['Apartment', 'Villa', 'Townhouse', 'Studio', 'Penthouse'],
+    tooltip: 'Choose the property type that best fits your investment strategy. Apartments offer good rental yields, while villas provide more space and potential for appreciation.',
+    estimatedTime: 30
   },
   {
     id: 2,
@@ -62,7 +73,9 @@ const journeySteps: JourneyStep[] = [
     description: 'Where do you want to invest?',
     icon: MapPin,
     inputType: 'select',
-    options: ['Dubai Marina', 'Downtown Dubai', 'Jumeirah Village Circle', 'Business Bay', 'Dubai Hills Estate']
+    options: ['Dubai Marina', 'Downtown Dubai', 'Jumeirah Village Circle', 'Business Bay', 'Dubai Hills Estate'],
+    tooltip: 'Dubai Marina and Downtown offer premium locations with high rental yields. JVC and Dubai Hills provide good value for money with strong growth potential.',
+    estimatedTime: 45
   },
   {
     id: 3,
@@ -72,7 +85,9 @@ const journeySteps: JourneyStep[] = [
     inputType: 'slider',
     min: 500000,
     max: 5000000,
-    step: 100000
+    step: 100000,
+    tooltip: 'Consider your total investment capacity including down payment, closing costs, and emergency funds. Higher budgets often provide better ROI opportunities.',
+    estimatedTime: 60
   },
   {
     id: 4,
@@ -80,7 +95,9 @@ const journeySteps: JourneyStep[] = [
     description: 'What\'s your primary investment objective?',
     icon: Target,
     inputType: 'select',
-    options: ['Rental Income', 'Capital Appreciation', 'Both', 'Portfolio Diversification']
+    options: ['Rental Income', 'Capital Appreciation', 'Both', 'Portfolio Diversification'],
+    tooltip: 'Rental income provides monthly cash flow, while capital appreciation builds long-term wealth. Both strategies can be combined for optimal results.',
+    estimatedTime: 30
   },
   {
     id: 5,
@@ -88,7 +105,9 @@ const journeySteps: JourneyStep[] = [
     description: 'How long do you plan to hold this investment?',
     icon: Clock,
     inputType: 'select',
-    options: ['1-3 years', '3-5 years', '5-10 years', '10+ years']
+    options: ['1-3 years', '3-5 years', '5-10 years', '10+ years'],
+    tooltip: 'Short-term (1-3 years) focuses on quick gains, while long-term (5+ years) allows for market cycles and compound growth.',
+    estimatedTime: 30
   },
   {
     id: 6,
@@ -96,7 +115,49 @@ const journeySteps: JourneyStep[] = [
     description: 'How experienced are you with property investment?',
     icon: Star,
     inputType: 'select',
-    options: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
+    options: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
+    tooltip: 'Beginners should focus on established areas and professional management. Experienced investors can explore emerging markets and value-add opportunities.',
+    estimatedTime: 30
+  }
+];
+
+// Quick start presets for popular investment strategies
+const quickStartPresets = [
+  {
+    name: 'First-Time Investor',
+    description: 'Conservative approach for beginners',
+    data: {
+      propertyType: 'Apartment',
+      location: 'Jumeirah Village Circle',
+      budget: 1500000,
+      investmentGoal: 'Rental Income',
+      timeline: '5-10 years',
+      experience: 'Beginner'
+    }
+  },
+  {
+    name: 'Premium Investor',
+    description: 'High-end properties in prime locations',
+    data: {
+      propertyType: 'Penthouse',
+      location: 'Dubai Marina',
+      budget: 4000000,
+      investmentGoal: 'Both',
+      timeline: '10+ years',
+      experience: 'Advanced'
+    }
+  },
+  {
+    name: 'Balanced Portfolio',
+    description: 'Mix of income and growth',
+    data: {
+      propertyType: 'Villa',
+      location: 'Dubai Hills Estate',
+      budget: 2500000,
+      investmentGoal: 'Both',
+      timeline: '5-10 years',
+      experience: 'Intermediate'
+    }
   }
 ];
 
@@ -119,11 +180,28 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
   const [simulationProgress, setSimulationProgress] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [analysisScore, setAnalysisScore] = useState(0);
+  const [showQuickStart, setShowQuickStart] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(0);
 
   const currentStepData = journeySteps.find(step => step.id === currentStep);
 
+  // Calculate remaining time
+  useEffect(() => {
+    const completedSteps = currentStep - 1;
+    const remainingSteps = journeySteps.length - currentStep;
+    const estimatedTimePerStep = 45; // average time per step
+    setRemainingTime(remainingSteps * estimatedTimePerStep);
+  }, [currentStep]);
+
   const updateJourneyData = (field: keyof JourneyData, value: any) => {
     setJourneyData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const applyQuickStart = (preset: typeof quickStartPresets[0]) => {
+    setJourneyData(preset.data);
+    setCurrentStep(journeySteps.length); // Jump to last step
+    setShowQuickStart(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const nextStep = () => {
@@ -211,18 +289,26 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
     switch (step.inputType) {
       case 'select':
         return (
-          <Select value={value as string} onValueChange={(val) => updateJourneyData(field, val)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={`Select ${step.title.toLowerCase()}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {step.options?.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-3">
+            <Select value={value as string} onValueChange={(val) => updateJourneyData(field, val)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={`Select ${step.title.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {step.options?.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {step.tooltip && (
+              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-blue-700 dark:text-blue-400">{step.tooltip}</p>
+              </div>
+            )}
+          </div>
         );
       
       case 'slider':
@@ -245,6 +331,12 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
                 }).format(value as number)}
               </span>
             </div>
+            {step.tooltip && (
+              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-blue-700 dark:text-blue-400">{step.tooltip}</p>
+              </div>
+            )}
           </div>
         );
       
@@ -270,6 +362,25 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
 
   const getProgressPercentage = () => {
     return (currentStep / journeySteps.length) * 100;
+  };
+
+  const shareResults = async () => {
+    const shareText = `My Dubai Property Investment Score: ${analysisScore}/100! Check out this amazing tool: [URL]`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My Investment Journey Results',
+          text: shareText,
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(shareText);
+      // You could add a toast notification here
+    }
   };
 
   if (isSimulating) {
@@ -320,7 +431,7 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
           <Card className="p-6 text-center bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
             <div className="text-6xl font-bold text-gradient-primary mb-2">{analysisScore}/100</div>
             <div className="text-lg text-muted-foreground mb-4">Investment Compatibility Score</div>
-            <div className="flex justify-center">
+            <div className="flex justify-center mb-4">
               <Badge className={`text-lg px-4 py-2 ${
                 analysisScore >= 80 ? 'bg-success text-white' :
                 analysisScore >= 60 ? 'bg-warning text-white' :
@@ -330,6 +441,22 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
                  analysisScore >= 60 ? 'Good Potential' :
                  'Needs Optimization'}
               </Badge>
+            </div>
+            
+            {/* Market Comparison */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-2xl font-bold text-primary">85%</div>
+                <div className="text-sm text-muted-foreground">Market Average</div>
+              </div>
+              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-2xl font-bold text-success">92%</div>
+                <div className="text-sm text-muted-foreground">Top Performers</div>
+              </div>
+              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-2xl font-bold text-primary">78%</div>
+                <div className="text-sm text-muted-foreground">Similar Profile</div>
+              </div>
             </div>
           </Card>
 
@@ -413,6 +540,20 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
                   </div>
                 </div>
               )}
+
+              {/* Next Steps */}
+              <div className="flex items-start gap-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                <TrendingUpIcon className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-green-700 dark:text-green-300">Recommended Next Steps</h4>
+                  <ul className="text-sm text-green-600/80 dark:text-green-400/80 space-y-1 mt-2">
+                    <li>• Research specific properties in {journeyData.location}</li>
+                    <li>• Contact a local real estate agent</li>
+                    <li>• Get pre-approval for financing</li>
+                    <li>• Review legal requirements for foreign investors</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </Card>
 
@@ -423,7 +564,7 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
               Get a comprehensive property analysis with detailed financial projections, 
               market insights, and personalized recommendations based on your profile.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
               <Button
                 onClick={onStartFullAnalysis}
                 className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white px-8 py-3 text-lg"
@@ -451,6 +592,18 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
                 Try Different Options
               </Button>
             </div>
+            
+            {/* Share Results */}
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                onClick={shareResults}
+                className="flex items-center gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                Share Results
+              </Button>
+            </div>
           </Card>
         </div>
       </div>
@@ -463,17 +616,54 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gradient-primary mb-4">Investment Journey Simulator</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
             Experience your property investment journey in just a few steps. 
             Get instant insights and recommendations tailored to your preferences.
           </p>
+          
+          {/* Social Proof */}
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-4">
+            <Users className="h-4 w-4" />
+            <span>Join 500+ investors who used this tool</span>
+          </div>
+
+          {/* Skip Journey Button */}
+          <Button
+            variant="outline"
+            onClick={onStartFullAnalysis}
+            className="flex items-center gap-2 mx-auto"
+          >
+            <SkipForward className="h-4 w-4" />
+            Skip Journey - Go Direct to Analysis
+          </Button>
         </div>
+
+        {/* Quick Start Presets */}
+        <Card className="p-6 mb-6 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+          <h3 className="text-lg font-semibold mb-3 text-center">Quick Start Options</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {quickStartPresets.map((preset, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                onClick={() => applyQuickStart(preset)}
+                className="flex flex-col items-center p-3 h-auto text-xs"
+              >
+                <div className="font-semibold mb-1">{preset.name}</div>
+                <div className="text-muted-foreground text-center">{preset.description}</div>
+              </Button>
+            ))}
+          </div>
+        </Card>
 
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between text-sm text-muted-foreground mb-2">
             <span>Step {currentStep} of {journeySteps.length}</span>
-            <span>{Math.round(getProgressPercentage())}% Complete</span>
+            <div className="flex items-center gap-2">
+              <Timer className="h-4 w-4" />
+              <span>{Math.round(remainingTime / 60)}m {remainingTime % 60}s remaining</span>
+            </div>
           </div>
           <div className="w-full bg-muted/30 rounded-full h-3 overflow-hidden border border-muted/50">
             <div
@@ -495,6 +685,11 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
             <p className="text-muted-foreground">
               {currentStepData?.description}
             </p>
+            {currentStepData?.estimatedTime && (
+              <div className="text-sm text-muted-foreground mt-2">
+                Estimated time: {currentStepData.estimatedTime} seconds
+              </div>
+            )}
           </div>
 
           <div className="mb-6">
@@ -503,15 +698,36 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
 
           {/* Navigation */}
           <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Previous
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCurrentStep(1);
+                  setJourneyData({
+                    propertyType: '',
+                    location: '',
+                    budget: 1000000,
+                    investmentGoal: '',
+                    timeline: '',
+                    experience: ''
+                  });
+                }}
+                className="flex items-center gap-2"
+              >
+                <HomeIcon className="h-4 w-4" />
+                Start Over
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Previous
+              </Button>
+            </div>
 
             {currentStep === journeySteps.length ? (
               <Button
