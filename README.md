@@ -1,73 +1,145 @@
-# Welcome to your Lovable project
+# Smart Property Analyzer Dubai
 
-## Project info
+Een geavanceerde web applicatie voor het analyseren van vastgoed investeringen in Dubai, gebouwd met moderne web technologieën.
 
-**URL**: https://lovable.dev/projects/3652b2ad-4ddd-482e-8e0b-73a1cf0e6bca
+## 🏗️ Project Info
 
-## How can I edit this code?
+**Smart Property Analyzer Dubai** is een comprehensive tool voor vastgoed investeerders en professionals die actief zijn in de Dubai vastgoedmarkt. De applicatie biedt:
 
-There are several ways of editing your application.
+- **Property Analysis**: Gedetailleerde analyse van vastgoed eigenschappen
+- **Investment Dashboard**: Overzicht van investeringsmogelijkheden
+- **Journey Simulator**: Simulatie van investeringsscenario's
+- **Insights Panel**: Markt inzichten en trends
+- **Mobile Optimized**: Volledig responsive design voor alle apparaten
 
-**Use Lovable**
+## 🚀 Technologieën
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3652b2ad-4ddd-482e-8e0b-73a1cf0e6bca) and start prompting.
+Dit project is gebouwd met:
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui
+- **UI Components**: Radix UI primitives
+- **Charts**: Recharts voor data visualisatie
+- **Forms**: React Hook Form + Zod validatie
+- **PDF Export**: jsPDF voor rapporten
 
-**Use your preferred IDE**
+## 📱 Features
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **Responsive Design**: Optimalisatie voor desktop, tablet en mobiel
+- **Dark/Light Theme**: Automatische thema detectie en toggle
+- **Real-time Data**: Live updates van vastgoed informatie
+- **Export Functionaliteit**: PDF rapporten genereren
+- **Interactive Charts**: Data visualisatie met Recharts
+- **Form Validation**: Robuuste form handling met Zod schema's
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🛠️ Lokale Ontwikkeling
 
-Follow these steps:
+### Vereisten
+- Node.js 18+ 
+- npm of yarn
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Installatie
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+```bash
+# 1. Clone de repository
+git clone <YOUR_GITHUB_REPO_URL>
+cd smart-property-analyzer-dubai
 
-# Step 3: Install the necessary dependencies.
-npm i
+# 2. Installeer dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Start development server
 npm run dev
+
+# 4. Open http://localhost:5173 in je browser
 ```
 
-**Edit a file directly in GitHub**
+### Beschikbare Scripts
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run dev          # Start development server
+npm run build        # Build voor productie
+npm run preview      # Preview van productie build
+npm run lint         # ESLint check
+```
 
-**Use GitHub Codespaces**
+## 🚀 Deployment naar Vercel
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Via GitHub
 
-## What technologies are used for this project?
+1. **Push naar GitHub**:
+   ```bash
+   git add .
+   git commit -m "Initial commit: Smart Property Analyzer Dubai"
+   git push origin main
+   ```
 
-This project is built with:
+2. **Verbinden met Vercel**:
+   - Ga naar [vercel.com](https://vercel.com)
+   - Log in met je GitHub account
+   - Klik "New Project"
+   - Selecteer je repository
+   - Vercel detecteert automatisch dat het een Vite project is
+   - Klik "Deploy"
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Vercel Configuratie
 
-## How can I deploy this project?
+De applicatie is al geconfigureerd voor Vercel deployment met:
+- Automatische build detectie
+- Optimale build settings voor Vite
+- Environment variable support
 
-Simply open [Lovable](https://lovable.dev/projects/3652b2ad-4ddd-482e-8e0b-73a1cf0e6bca) and click on Share -> Publish.
+## 📁 Project Structuur
 
-## Can I connect a custom domain to my Lovable project?
+```
+src/
+├── components/          # React componenten
+│   ├── ui/             # shadcn/ui componenten
+│   ├── AppHeader.tsx   # Hoofd navigatie
+│   ├── PropertyAnalyzer.tsx # Hoofd property analyzer
+│   └── ...
+├── pages/              # Route componenten
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functies
+└── assets/             # Afbeeldingen en media
+```
 
-Yes, you can!
+## 🎨 Customisatie
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Theming
+- Pas kleuren aan in `tailwind.config.ts`
+- Wijzig component styling in `src/components/ui/`
+- Voeg nieuwe componenten toe via shadcn/ui CLI
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Content
+- Update Dubai-specifieke data in componenten
+- Voeg nieuwe property types toe
+- Pas berekeningen aan voor lokale markt
+
+## 📊 Performance
+
+- **Lighthouse Score**: Geoptimaliseerd voor Core Web Vitals
+- **Bundle Size**: Tree-shaking en code splitting
+- **Images**: Geoptimaliseerde afbeeldingen met Vite
+- **Mobile**: Touch-friendly interface en snelle laadtijden
+
+## 🤝 Bijdragen
+
+1. Fork het project
+2. Maak een feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit je wijzigingen (`git commit -m 'Add some AmazingFeature'`)
+4. Push naar de branch (`git push origin feature/AmazingFeature`)
+5. Open een Pull Request
+
+## 📄 Licentie
+
+Dit project is ontwikkeld voor commercieel gebruik in de Dubai vastgoedmarkt.
+
+## 📞 Contact
+
+Voor vragen over dit project of samenwerking, neem contact op via de applicatie of repository issues.
+
+---
+
+**Gebouwd met ❤️ voor de Dubai vastgoedmarkt**
