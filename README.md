@@ -33,6 +33,13 @@ Dit project is gebouwd met:
 - **Interactive Charts**: Data visualisatie met Recharts
 - **Form Validation**: Robuuste form handling met Zod schema's
 
+## 📝 Release Notes (laatste wijzigingen)
+
+- Investment Overview verplaatst direct onder Key Metrics voor betere leesvolgorde
+- Wealth chart verbeterd: referentielijnen (3/5/7/10), compacte tooltip, badges met inzichten (YoY, piekjaar, mix)
+- Management fee realistischer: berekend over effectieve huur (na vacancy) + base fee ×12
+- UI cleanups en mobiele optimalisaties
+
 ## 🛠️ Lokale Ontwikkeling
 
 ### Vereisten
