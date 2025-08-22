@@ -1,0 +1,28 @@
+/* SPA Logo Animations and Styles */
+
+/* Beautiful Pulse Animation for the yellow dot */
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.6);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(0.9);
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.9);
+  }
+}
+
+.spa-logo {
+  transition: transform 0.3s ease;
+}
+
+.spa-logo:hover {
+  transform: translateY(-2px);
+}
+
+/* Enhanced pulse dot animation */
+.pulse-dot {
+  animation: pulse 2s ease-in-out infinite;
+}

@@ -259,7 +259,7 @@ Optimized colors for mobile devices with better contrast and readability
     @apply bg-gradient-to-br from-card to-card-premium;
     @apply shadow-lg hover:shadow-xl transition-all duration-200;
     @apply border border-border-secondary rounded-2xl;
-    @apply p-4 sm:p-6;
+    @apply p-3 sm:p-6;
   }
 
   .card-floating {
@@ -268,7 +268,7 @@ Optimized colors for mobile devices with better contrast and readability
 
   /* Mobile Investment Metric Cards */
   .metric-card {
-    @apply card-premium p-4 sm:p-6 text-center border-2 transition-all duration-300 hover:shadow-lg;
+    @apply card-premium p-3 sm:p-5 text-center border-2 transition-all duration-300 hover:shadow-lg;
   }
 
   .metric-value {
@@ -292,8 +292,12 @@ Optimized colors for mobile devices with better contrast and readability
 
   /* Mobile Form Styles */
   .form-step {
-    @apply card-premium p-4 sm:p-6 space-y-4 sm:space-y-6;
+    @apply p-4 sm:p-6 space-y-4 sm:space-y-6;
     @apply animate-in fade-in-50 slide-in-from-bottom-4 duration-200;
+    background: linear-gradient(145deg, hsl(0 0% 98%), hsl(0 0% 96%));
+    border: 1px solid hsl(240 5.9% 90%);
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 
   /* Mobile Touch Feedback */
@@ -429,6 +433,9 @@ Optimized colors for mobile devices with better contrast and readability
   }
   
   .metric-value {
-    @apply text-xl;
+    @apply text-lg;
+  }
+  .metric-label {
+    @apply text-xs;
   }
 }

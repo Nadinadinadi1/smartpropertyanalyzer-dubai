@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="favicon32Grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="50%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#312E81"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with scaled border-radius -->
+  <rect width="32" height="32" rx="8" fill="url(#favicon32Grad)"/>
+  
+  <!-- Pulsing dot - scaled for 32x32 -->
+  <circle cx="26" cy="6" r="2" fill="#FBBF24" stroke="white" stroke-width="1"/>
+  
+  <!-- SPA Text - scaled for 32x32 -->
+  <text 
+    x="16" 
+    y="20" 
+    text-anchor="middle" 
+    fill="white" 
+    font-size="6" 
+    font-weight="bold" 
+    font-family="system-ui, -apple-system, sans-serif"
+  >
+    SPA
+  </text>
+</svg>

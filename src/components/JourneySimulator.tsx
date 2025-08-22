@@ -437,38 +437,7 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
             <p className="text-muted-foreground">Based on your preferences, here's what we discovered:</p>
           </div>
 
-          {/* Analysis Score */}
-          <Card className="p-6 text-center bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-            <div className="text-6xl font-bold text-gradient-primary mb-2">{analysisScore}/100</div>
-            <div className="text-lg text-muted-foreground mb-4">Investment Compatibility Score</div>
-            <div className="flex justify-center mb-4">
-              <Badge className={`text-lg px-4 py-2 ${
-                analysisScore >= 80 ? 'bg-success text-white' :
-                analysisScore >= 60 ? 'bg-warning text-white' :
-                'bg-danger text-white'
-              }`}>
-                {analysisScore >= 80 ? 'Excellent Match' :
-                 analysisScore >= 60 ? 'Good Potential' :
-                 'Needs Optimization'}
-              </Badge>
-            </div>
-            
-            {/* Market Comparison */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-2xl font-bold text-primary">85%</div>
-                <div className="text-sm text-muted-foreground">Market Average</div>
-              </div>
-              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-2xl font-bold text-success">92%</div>
-                <div className="text-sm text-muted-foreground">Top Performers</div>
-              </div>
-              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                <div className="text-2xl font-bold text-primary">78%</div>
-                <div className="text-sm text-muted-foreground">Similar Profile</div>
-              </div>
-            </div>
-          </Card>
+          {/* Analysis Score moved to bottom */}
 
           {/* Journey Summary */}
           <Card className="p-6">
@@ -576,7 +545,14 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
               <Button
-                onClick={onStartFullAnalysis}
+                onClick={() => {
+                  onStartFullAnalysis();
+                  // Scroll on the landing page to the property input anchor
+                  setTimeout(() => {
+                    const el = document.getElementById('input-details');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 50);
+                }}
                 className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white px-8 py-3 text-lg"
               >
                 <Calculator className="h-5 w-5 mr-2" />
@@ -599,20 +575,41 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
                 className="px-8 py-3 text-lg"
               >
                 <RotateCcw className="h-5 w-5 mr-2" />
-                Try Different Options
+                Change Journey Input
               </Button>
             </div>
             
-            {/* Share Results */}
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                onClick={shareResults}
-                className="flex items-center gap-2"
-              >
-                <Share2 className="h-4 w-4" />
-                Share Results
-              </Button>
+            {/* Share Results removed per request */}
+          </Card>
+
+          {/* Analysis Score (now at the end) */}
+          <Card className="p-6 text-center bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+            <div className="text-6xl font-bold text-gradient-primary mb-2">{analysisScore}/100</div>
+            <div className="text-lg text-muted-foreground mb-4">Investment Compatibility Score</div>
+            <div className="flex justify-center mb-4">
+              <Badge className={`text-lg px-4 py-2 ${
+                analysisScore >= 80 ? 'bg-success text-white' :
+                analysisScore >= 60 ? 'bg-warning text-white' :
+                'bg-danger text-white'
+              }`}>
+                {analysisScore >= 80 ? 'Excellent Match' :
+                 analysisScore >= 60 ? 'Good Potential' :
+                 'Needs Optimization'}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-2xl font-bold text-primary">85%</div>
+                <div className="text-sm text-muted-foreground">Market Average</div>
+              </div>
+              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-2xl font-bold text-success">92%</div>
+                <div className="text-sm text-muted-foreground">Top Performers</div>
+              </div>
+              <div className="text-center p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                <div className="text-2xl font-bold text-primary">78%</div>
+                <div className="text-sm text-muted-foreground">Similar Profile</div>
+              </div>
             </div>
           </Card>
         </div>
@@ -639,7 +636,13 @@ export default function JourneySimulator({ onComplete, onStartFullAnalysis }: Jo
           {/* Skip Journey Button */}
           <Button
             variant="outline"
-            onClick={onStartFullAnalysis}
+            onClick={() => {
+              onStartFullAnalysis();
+              setTimeout(() => {
+                const el = document.getElementById('input-details');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }, 50);
+            }}
             className="flex items-center gap-2 mx-auto bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 border-2 border-blue-300/40 dark:border-blue-600/40 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 hover:scale-105 text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white"
           >
             <SkipForward className="h-4 w-4" />

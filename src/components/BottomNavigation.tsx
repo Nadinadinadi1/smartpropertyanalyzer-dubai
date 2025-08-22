@@ -11,7 +11,6 @@ const tabs = [
   { id: 'journey', label: 'Journey', icon: Play },
   { id: 'analyze', label: 'Property Input', icon: Calculator },
   { id: 'analyses', label: 'Analyses', icon: BarChart3 },
-  { id: 'insights', label: 'Insights', icon: TrendingUp },
   { id: 'settings', label: 'Settings', icon: Settings }
 ];
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import BottomNavigation from '@/components/BottomNavigation';
 import PropertyAnalyzer from '@/components/PropertyAnalyzer';
 import InvestmentDashboard from '@/components/InvestmentDashboard';
-import InsightsPanel from '@/components/InsightsPanel';
 import SettingsPanel from '@/components/SettingsPanel';
 import JourneySimulator from '@/components/JourneySimulator';
 
@@ -18,6 +17,7 @@ interface PropertyData {
   propertyType: string;
   area: string;
   downPayment: number;
+  agentFeePercent: number;
   loanTerm: number;
   interestRate: number;
   dldFeeIncluded: boolean;
@@ -47,19 +47,22 @@ const Index = () => {
 
   // Listen for navigation events from child components
   useEffect(() => {
-    const handleNavigateToInsights = (event: CustomEvent) => {
-      if (event.detail?.targetTab === 'insights') {
-        setActiveTab('insights');
-        // Scroll to top when navigating to insights
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    };
 
     const handleNavigateToAnalyze = (event: CustomEvent) => {
       if (event.detail?.targetTab === 'analyze') {
         setActiveTab('analyze');
-        // Scroll to top when navigating to analyze
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const targetId = event.detail?.scrollToId;
+        // Give React a tick to render tab content, then scroll
+        setTimeout(() => {
+          if (targetId) {
+            const el = document.getElementById(targetId);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              return;
+            }
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 50);
       }
     };
 
@@ -79,13 +82,11 @@ const Index = () => {
       }
     };
 
-    window.addEventListener('navigateToInsights', handleNavigateToInsights as EventListener);
     window.addEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
     window.addEventListener('navigateToAnalyses', handleNavigateToAnalyses as EventListener);
     window.addEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
     
     return () => {
-      window.removeEventListener('navigateToInsights', handleNavigateToInsights as EventListener);
       window.removeEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
       window.removeEventListener('navigateToAnalyses', handleNavigateToAnalyses as EventListener);
       window.removeEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
@@ -139,6 +140,7 @@ const Index = () => {
       return (
         <PropertyAnalyzer 
           onAnalyze={handleAnalyze}
+          initialData={propertyData || undefined}
         />
       );
     }
@@ -174,40 +176,7 @@ const Index = () => {
       );
     }
     
-    if (activeTab === 'insights') {
-      if (!propertyData || !showResults) {
-        return (
-          <div className="h-full flex items-center justify-center p-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Smart Insights Ready</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Complete your analysis to unlock smart recommendations
-              </p>
-              <button
-                onClick={() => setActiveTab('analyze')}
-                className="btn-gold px-6 py-2 rounded-lg font-medium"
-              >
-                Get Insights
-              </button>
-            </div>
-          </div>
-        );
-      }
-      return (
-        <InsightsPanel 
-          propertyData={propertyData} 
-          investmentScore={investmentScore}
-          scoreDetails={scoreDetails}
-          projectionData={projectionData}
-          irrValue={irrValue}
-        />
-      );
-    }
+    
     
     if (activeTab === 'settings') {
       return <SettingsPanel />;
@@ -232,37 +201,9 @@ const Index = () => {
           {/* Main Hero Text - Centered with more space */}
           <div className="relative z-10 h-full flex items-center justify-center text-white p-6 pb-20">
             <div className="text-center">
-              <h1 className="text-2xl font-bold mb-3 text-white drop-shadow-lg">Smart Property Analyzer Dubai</h1>
-              <p className="text-sm opacity-95 text-white drop-shadow-md">Professional investment analysis for Dubai real estate</p>
-            </div>
-          </div>
-
-          {/* Investment Journey Simulator Banner - Overlay on Hero - Positioned lower */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-80 px-3 z-20">
-            <div className="p-3 bg-gradient-to-r from-blue-100/90 to-blue-200/90 dark:from-blue-50/80 dark:to-blue-100/80 border border-blue-300/50 rounded-lg backdrop-blur-sm shadow-lg">
-              <div className="text-center">
-                <h3 className="text-xs font-bold text-blue-800 dark:text-blue-700 mb-1">
-                  🚀 New Investment Journey Simulator
-                </h3>
-                <p className="text-xs text-blue-700 dark:text-blue-600 mb-2">
-                  Curious about your investment potential? Try our guided journey first for instant insights!
-                </p>
-                <Button
-                  onClick={() => {
-                    // Navigate to journey tab
-                    window.location.hash = '#journey';
-                    // Dispatch event to trigger tab change
-                    const journeyEvent = new CustomEvent('navigateToJourney', {
-                      detail: { targetTab: 'journey' }
-                    });
-                    window.dispatchEvent(journeyEvent);
-                  }}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs h-6"
-                >
-                  Start Journey
-                </Button>
-              </div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">Smart Property Analyzer Dubai</h1>
+              <p className="text-xl md:text-2xl opacity-95 text-white drop-shadow-md mb-3">Professional investment analysis for Dubai real estate</p>
+              <p className="text-lg opacity-90 text-white drop-shadow-md">Continue below for detailed analysis</p>
             </div>
           </div>
         </div>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <defs>
+    <linearGradient id="appleTouchGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1D4ED8"/>
+      <stop offset="50%" stop-color="#1E3A8A"/>
+      <stop offset="100%" stop-color="#312E81"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with scaled border-radius -->
+  <rect width="180" height="180" rx="43" fill="url(#appleTouchGrad)"/>
+  
+  <!-- Pulsing dot - scaled for 180x180 -->
+  <circle cx="148" cy="32" r="11" fill="#FBBF24" stroke="white" stroke-width="4"/>
+  
+  <!-- SPA Text - scaled for 180x180 -->
+  <text 
+    x="90" 
+    y="112" 
+    text-anchor="middle" 
+    fill="white" 
+    font-size="36" 
+    font-weight="bold" 
+    letter-spacing="2"
+    font-family="system-ui, -apple-system, sans-serif"
+  >
+    SPA
+  </text>
+</svg>
