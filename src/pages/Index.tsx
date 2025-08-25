@@ -3,11 +3,12 @@ import BottomNavigation from '@/components/BottomNavigation';
 import PropertyAnalyzer from '@/components/PropertyAnalyzer';
 import InvestmentDashboard from '@/components/InvestmentDashboard';
 import SettingsPanel from '@/components/SettingsPanel';
-import JourneySimulator from '@/components/JourneySimulator';
+// JourneySimulator removed for beta
 
 import dubaiHeroImage from '@/assets/dubai-skyline-hero.jpg';
 import { Button } from '@/components/ui/button';
 import { MessageCircle } from 'lucide-react';
+import { AppHeader } from '@/components/AppHeader';
 
 interface PropertyData {
   propertyStatus: 'ready' | 'off-plan';
@@ -74,22 +75,16 @@ const Index = () => {
       }
     };
 
-    const handleNavigateToJourney = (event: CustomEvent) => {
-      if (event.detail?.targetTab === 'journey') {
-        setActiveTab('journey');
-        // Scroll to top when navigating to journey
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    };
+    // Journey navigation removed
 
     window.addEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
     window.addEventListener('navigateToAnalyses', handleNavigateToAnalyses as EventListener);
-    window.addEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
+    // window.addEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
     
     return () => {
       window.removeEventListener('navigateToAnalyze', handleNavigateToAnalyze as EventListener);
       window.removeEventListener('navigateToAnalyses', handleNavigateToAnalyses as EventListener);
-      window.removeEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
+      // window.removeEventListener('navigateToJourney', handleNavigateToJourney as EventListener);
     };
   }, []);
 
@@ -121,20 +116,7 @@ const Index = () => {
   };
 
   const renderTabContent = () => {
-    if (activeTab === 'journey') {
-      return (
-        <JourneySimulator 
-          onComplete={(data) => {
-            console.log('Journey completed:', data);
-            // You can store this data for later use
-          }}
-          onStartFullAnalysis={() => {
-            setActiveTab('analyze');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-        />
-      );
-    }
+    // Journey tab removed
     
     if (activeTab === 'analyze') {
       return (
@@ -187,37 +169,38 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-
-      
-      {/* Hero Section - Show on analyze tab (Property Input) */}
-      {activeTab === 'analyze' && (
-        <div className="relative h-80 overflow-hidden mt-20">
+      <AppHeader />
+ 
+       
+       {/* Hero Section - Show on analyze tab (Property Input) */}
+       {activeTab === 'analyze' && (
+        <div id="hero-top" className="relative h-80 overflow-hidden mt-16">
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${dubaiHeroImage})` }}
           />
           <div className="absolute inset-0 bg-gradient-hero opacity-90" />
           
-          {/* Main Hero Text - Centered with more space */}
-          <div className="relative z-10 h-full flex items-center justify-center text-white p-6 pb-20">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">Smart Property Analyzer Dubai</h1>
-              <p className="text-xl md:text-2xl opacity-95 text-white drop-shadow-md mb-3">Professional investment analysis for Dubai real estate</p>
-              <p className="text-lg opacity-90 text-white drop-shadow-md">Continue below for detailed analysis</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className={`${activeTab === 'analyze' ? 'min-h-[calc(100vh-20rem)]' : 'min-h-screen'} pb-16`}>
-        {renderTabContent()}
-      </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
-  );
+           {/* Main Hero Text - Centered with more space */}
+           <div className="relative z-10 h-full flex items-center justify-center text-white p-6 pb-20">
+             <div className="text-center">
+               <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white drop-shadow-lg">Smart Property Analyzer — Dubai</h1>
+               <p className="text-xl md:text-2xl opacity-95 text-white drop-shadow-md mb-3">Professional-grade ROI, Cash Flow & IRR Analysis</p>
+               <p className="text-lg opacity-90 text-white drop-shadow-md">Built for Dubai real estate</p>
+             </div>
+           </div>
+         </div>
+       )}
+ 
+       {/* Main Content */}
+       <div className={`${activeTab === 'analyze' ? 'min-h-[calc(100vh-20rem)]' : 'min-h-screen'} pb-28`}>
+         {renderTabContent()}
+       </div>
+ 
+       {/* Bottom Navigation */}
+       <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+     </div>
+   );
 };
 
 export default Index;

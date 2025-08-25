@@ -8,7 +8,6 @@ interface BottomNavigationProps {
 }
 
 const tabs = [
-  { id: 'journey', label: 'Journey', icon: Play },
   { id: 'analyze', label: 'Property Input', icon: Calculator },
   { id: 'analyses', label: 'Analyses', icon: BarChart3 },
   { id: 'settings', label: 'Settings', icon: Settings }

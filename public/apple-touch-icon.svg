@@ -1,3 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+  <rect x="0" y="0" width="180" height="180" rx="24" fill="#2563eb"/>
+  <!-- scale bars proportionally; base 48→180 scale = 3.75 -->
+  <!-- bar widths 11.25, gap 7.5, radius 3.75, bottom inset 30 -->
+  <rect x="54.375" y="150" width="11.25" height="30" rx="3.75" fill="#ffffff"/>
+  <rect x="73.125" y="120" width="11.25" height="60" rx="3.75" fill="#ffffff"/>
+  <rect x="91.875" y="135" width="11.25" height="45" rx="3.75" fill="#ffffff"/>
+  <rect x="110.625" y="105" width="11.25" height="75" rx="3.75" fill="#ffffff"/>
+  <rect x="129.375" y="157.5" width="11.25" height="22.5" rx="3.75" fill="#ffffff"/>
+</svg>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
   <defs>
     <linearGradient id="appleTouchGrad" x1="0%" y1="0%" x2="100%" y2="100%">

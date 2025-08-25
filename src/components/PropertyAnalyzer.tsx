@@ -4,26 +4,35 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import { Command, CommandGroup, CommandItem, CommandInput, CommandList, CommandEmpty, CommandSeparator } from '@/components/ui/command';
+import CommunityCombobox from '@/components/CommunityCombobox';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ArrowRight, Home, MapPin, Calculator, Building, TrendingUp, Target, Settings, MessageCircle, Send, Star, Sun, Moon, HardHat, Info, ChevronDown } from 'lucide-react';
+import { Home, MapPin, Calculator, Building, TrendingUp, Target, Settings, MessageCircle, Send, Star, Sun, Moon, HardHat, Info, ChevronDown, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Toaster } from 'sonner';
 import dubaiHeroImage from '@/assets/dubai-skyline-hero.jpg';
 import SPALogo from './SPALogo';
+import FeedbackButton from './FeedbackButton';
 import React from 'react'; // Added for React.createElement
 
 
 interface PropertyData {
   propertyStatus: 'ready' | 'off-plan';
   name: string;
+  sizeSqft: number;
   price: number;
   priceInputMethod: 'slider' | 'manual';
   propertyType: string;
   area: string;
+  handoverBy?: string | null;
+  preHandoverPercent: number;
+  // New: Beds & Baths
+  bedrooms: number | 'studio' | '8+';
+  bathrooms: number | '6+';
   downPayment: number;
   agentFeePercent: number;
   loanTerm: number;
@@ -60,6 +69,7 @@ const steps = [
   { id: 6, title: 'Growth & Exit', icon: TrendingUp },
 ];
 
+// Seed list, augmented by public/data/dubai-communities.json when available
 const dubaiAreas = [
   'Dubai Marina',
   'Downtown Dubai',
@@ -77,7 +87,34 @@ const dubaiAreas = [
   'Dubai Silicon Oasis'
 ];
 
-const propertyTypes = ['Apartment', 'Villa', 'Townhouse', 'Studio', 'Penthouse', 'Office', 'Retail'];
+const bayutPropertyTypes = {
+  residential: [
+    'Apartment',
+    'Villa',
+    'Townhouse',
+    'Penthouse',
+    'Hotel Apartment',
+    'Villa Compound',
+    'Land',
+    'Building',
+    'Floor',
+  ],
+  commercial: [
+    'Office',
+    'Shop',
+    'Warehouse',
+    'Labour Camp',
+    'Bulk Unit',
+    'Factory',
+    'Mixed Use Land',
+    'Land',
+    'Building',
+    'Industrial Land',
+    'Showroom',
+    'Floor',
+    'Other Commercial',
+  ],
+} as const;
 
 export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAnalyzerProps) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -88,6 +125,7 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
   const [email, setEmail] = useState('');
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [allCommunities, setAllCommunities] = useState<string[] | null>(null);
 
   // Titles for compact per-step progress display
   const stepTitles: string[] = ['Property Details', 'Financing', 'Revenue', 'Expenses', 'Growth & Exit'];
@@ -99,10 +137,15 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
   const [propertyData, setPropertyData] = useState<PropertyData>({
     propertyStatus: 'ready',
     name: '',
+    sizeSqft: 0,
     price: 1000000,
     priceInputMethod: 'slider',
     propertyType: '',
     area: '',
+    handoverBy: null,
+    preHandoverPercent: 0,
+    bedrooms: 'studio',
+    bathrooms: 1,
     downPayment: 25,
     agentFeePercent: 2,
     loanTerm: 25,
@@ -123,6 +166,8 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
     sellingCosts: 3,
   });
 
+  // Original behavior: step 1 shows progress immediately
+
   // Hydrate form with previously analyzed data when returning to Analyze tab
   useEffect(() => {
     if (initialData) {
@@ -130,6 +175,16 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
+
+  // Lazy-load complete communities list
+  useEffect(() => {
+    fetch('/data/dubai-communities.json')
+      .then(r => r.ok ? r.json() : null)
+      .then((data: string[] | null) => {
+        if (Array.isArray(data) && data.length) setAllCommunities(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const updatePropertyData = (field: keyof PropertyData, value: any) => {
     setPropertyData(prev => ({ ...prev, [field]: value }));
@@ -158,15 +213,9 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
   const handleAnalyze = async () => {
     setIsAnalyzing(true);
     setProgress(0);
-    
-    // Scroll to top when analysis starts
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Show feedback dialog after 3.5 seconds instead of immediately
-    const feedbackDelay = 3500;
 
-    // Simulate 10-second analysis delay with smooth progress
-    const durationMs = 10000;
+    const durationMs = 3000;
     const startTime = Date.now();
     const progressInterval = window.setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -174,18 +223,13 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
       setProgress(pct);
       if (pct >= 100) {
         clearInterval(progressInterval);
+        // Finish analysis automatically after short delay
+        setTimeout(() => {
+          setIsAnalyzing(false);
+          onAnalyze(propertyData);
+        }, 300);
       }
     }, 100);
-    
-    // Show feedback dialog after 3.5 seconds
-    setTimeout(() => {
-      setShowFeedback(true);
-      // Scroll to top when feedback dialog appears
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, feedbackDelay);
-
-    // Don't auto-complete analysis - wait for feedback to be handled
-    // The analysis will be completed in handleFeedbackSubmit or when feedback is skipped
   };
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
@@ -225,148 +269,87 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
 
   return (
     <>
-      <div className="h-full flex flex-col bg-background">
-        {/* SPA Logo and Theme Toggle */}
-        <div className="absolute top-4 left-4 z-10">
-          <button
-            onClick={() => window.location.hash = '#analyze'}
-            className="relative hover:scale-105 transition-transform duration-200"
-          >
-            <SPALogo size={40} showPulse={false} />
-          </button>
-        </div>
-
-        {/* Theme Toggle and Feedback Button - Top Right */}
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          {/* Feedback Button */}
-          <button
-            onClick={() => {
-              // Open feedback dialog
-              setShowFeedback(true);
-            }}
-            className="w-10 h-10 bg-primary border border-primary rounded-xl flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors"
-          >
-            <MessageCircle className="h-5 w-5 text-white" />
-          </button>
-          
-          {/* Theme Toggle */}
-          <button
-            onClick={() => {
-              // Toggle theme logic here
-              document.documentElement.classList.toggle('dark');
-            }}
-            className="w-10 h-10 bg-card/80 backdrop-blur-sm border border-border rounded-xl flex items-center justify-center shadow-md hover:bg-card transition-colors"
-          >
-            <Sun className="h-5 w-5 text-primary dark:hidden" />
-            <Moon className="h-5 w-5 text-primary hidden dark:block" />
-          </button>
-        </div>
-
-        {/* Journey Section - Investment Journey Simulator (moved under header) */}
-        <div className="bg-white p-6 border-b border-gray-200">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200 shadow-lg">
-              <div className="text-center">
-                {/* New User Welcome Message */}
-                <div className="mb-4">
-                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">🚀 New: Investment Journey Simulator</h3>
-                  <p className="text-gray-600 mb-4">
-                    New to property investment? Start with our guided journey simulator for instant insights before diving into the full calculator!
-                  </p>
-                </div>
-                
-                {/* Call to Action */}
-                <div className="bg-white rounded-xl p-4 border border-blue-200 shadow-sm">
-                  <p className="text-sm text-gray-700 mb-3">
-                    <strong>Perfect for beginners:</strong> Get a quick overview of your investment potential in just 2 minutes
-                  </p>
-                  <button
-                    onClick={() => {
-                      // Navigate to journey tab
-                      window.location.hash = '#journey';
-                      // Dispatch event to trigger tab change
-                      const journeyEvent = new CustomEvent('navigateToJourney', {
-                        detail: { targetTab: 'journey' }
-                      });
-                      window.dispatchEvent(journeyEvent);
-                    }}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-                  >
-                    🚀 Start Journey Simulator
-                  </button>
-                </div>
-                
-                {/* Divider */}
-                <div className="flex items-center my-6">
-                  <div className="flex-1 h-px bg-gray-300"></div>
-                  <span className="px-4 text-sm text-gray-500 font-medium">OR</span>
-                  <div className="flex-1 h-px bg-gray-300"></div>
-                </div>
-                
-                {/* Continue to Full Analysis */}
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-2">Ready for detailed analysis?</p>
-                  <p className="text-xs text-gray-500">Continue below to use the full property calculator</p>
-                </div>
-              </div>
+      {/* Header Bar - removed (now global in AppHeader) */}
+      <div className="hidden">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <SPALogo size={32} showPulse={false} />
+            <div>
+              <div className="text-sm font-semibold">Smart Property Analyzer — Dubai</div>
+              <div className="text-xs text-gray-500">Professional-grade ROI, Cash Flow & IRR Analysis</div>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <FeedbackButton variant="compact" />
+            <button
+              onClick={() => {
+                document.documentElement.classList.toggle('dark');
+              }}
+              className="w-10 h-10 bg-card/80 backdrop-blur-sm border border-border rounded-xl flex items-center justify-center shadow-md hover:bg-card transition-colors"
+            >
+              <Sun className="h-5 w-5 text-primary dark:hidden" />
+              <Moon className="h-5 w-5 text-primary hidden dark:block" />
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* New Promotional Section - Blue tones and positioned higher */}
-        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-6 border-b border-blue-200">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-lg">
-              <div className="text-center">
-                <div className="mb-4">
-                  <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">🎯 In Just 5 Steps: Complete Investment Insight</h3>
-                  <p className="text-base sm:text-lg text-gray-700 mb-3">
-                    Transform your property dreams into data-driven decisions. Our step-by-step analysis reveals your true investment potential.
-                  </p>
+      {/* Hero Section removed */}
+
+      {/* Journey Promo removed */}
+
+      {/* New Promotional Section - Blue tones and positioned higher */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 p-6 border-b border-blue-200">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-lg">
+            <div className="text-center">
+              <div className="mb-4">
+                <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
-                
-                {/* Benefits Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                    <div className="text-blue-700 text-sm font-semibold">📊 ROI Analysis</div>
-                    <p className="text-xs text-gray-600 mt-1">Calculate exact returns on your investment</p>
-                  </div>
-                  <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
-                    <div className="text-indigo-700 text-sm font-semibold">💰 Cash Flow</div>
-                    <p className="text-xs text-gray-600 mt-1">Monthly income vs. expenses breakdown</p>
-                  </div>
-                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                    <div className="text-purple-700 text-sm font-semibold">📈 Growth Projections</div>
-                    <p className="text-xs text-gray-600 mt-1">1-10 year investment forecasts</p>
-                  </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">🎯 In Just 5 Steps: Complete Investment Insight</h3>
+                <p className="text-base sm:text-lg text-gray-700 mb-3">
+                  Transform your property dreams into data-driven decisions. Our step-by-step analysis reveals your true investment potential.
+                </p>
+              </div>
+              
+              {/* Benefits Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div className="text-blue-700 text-sm font-semibold">📊 ROI Analysis</div>
+                  <p className="text-xs text-gray-600 mt-1">Calculate exact returns on your investment</p>
                 </div>
-                
-                                              {/* Call to Action Button */}
+                <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                  <div className="text-indigo-700 text-sm font-semibold">💰 Cash Flow</div>
+                  <p className="text-xs text-gray-600 mt-1">Monthly income vs. expenses breakdown</p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                  <div className="text-purple-700 text-sm font-semibold">📈 Growth Projections</div>
+                  <p className="text-xs text-gray-600 mt-1">1-10 year investment forecasts</p>
+                </div>
+              </div>
+              
+                                              {/* Continue text + scroll arrow */}
                               <div className="text-center mb-6">
+                                <p className="text-sm text-gray-600">Continue below to use the full property calculator</p>
                                 <button
                                   onClick={() => {
-                                    // Scroll to the calculator section
-                                    const calculatorSection = document.querySelector('.bg-gradient-to-br.from-slate-100');
-                                    if (calculatorSection) {
-                                      calculatorSection.scrollIntoView({ 
-                                        behavior: 'smooth', 
-                                        block: 'start' 
-                                      });
+                                    const anchor = document.getElementById('input-details');
+                                    if (anchor) {
+                                      anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                      return;
+                                    }
+                                    const fallback = document.querySelector('.bg-gradient-to-br.from-slate-100');
+                                    if (fallback) {
+                                      (fallback as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
                                     }
                                   }}
-                                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                                  aria-label="Scroll to calculator"
+                                  className="mt-3 inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
                                 >
-                                  🚀 Start Detailed Analysis
+                                  <ChevronDown className="w-6 h-6" />
                                 </button>
                               </div>
                 
@@ -381,185 +364,277 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
         {/* Hero removed; integrated into Step 1 header below */}
 
         {/* Step Content */}
-        <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6">
+        <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 pb-40">
           <div className="max-w-4xl mx-auto">
             {currentStep === 1 && (
               <div className="bg-white rounded-2xl p-4 sm:p-6 border border-blue-200 shadow-lg">
-                <div id="step-progress" className="mb-6">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-gray-600">Progress</span>
-                    <span className="text-xs text-blue-600">Step {currentStep} of 5</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full transition-all duration-500" style={{ width: `${(currentStep / 5) * 100}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[11px] text-gray-500 mt-2">
-                    {stepTitles.map((title, idx) => (
-                      <span key={title} className={idx + 1 === currentStep ? 'font-semibold text-gray-700' : ''}>{title}</span>
-                    ))}
-                  </div>
-                </div>
                 <div id="input-details" className="h-0"></div>
                 <div className="text-center mb-4 sm:mb-6">
                   <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">🎯 Start Detailed Analysis</h2>
                   <p className="text-sm sm:text-base text-gray-600 mt-2">
                     Begin your investment journey by filling out the form below. Each step will guide you through the essential information needed for a comprehensive property analysis.
                   </p>
-                  <div className="mt-3">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                      Property Details
-                    </span>
+                </div>
+                {/* Progress moved below header */}
+                <div id="step-progress" className="mb-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-600">Step {currentStep} of 5</span>
+                    <span className="text-xs text-blue-600">{Math.round((currentStep / 5) * 100)}%</span>
                   </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full transition-all duration-500" style={{ width: `${(currentStep / 5) * 100}%` }} />
+                  </div>
+                </div>
+                {/* Top Nav - Step 1 */}
+                <div className="mb-4 flex justify-end">
+                  <Button onClick={nextStep} className="h-9 px-4">Next</Button>
+                </div>
+
+                {/* Property Details section header (consistent style) */}
+                <div className="text-center mb-4 sm:mb-6">
+                  <Home className="h-8 w-8 sm:h-12 sm:w-12 text-primary mx-auto mb-2" />
+                  <h2 className="text-xl sm:text-2xl font-bold">Property Details</h2>
+                  <p className="text-sm sm:text-base text-muted-foreground">Basic property information</p>
                 </div>
 
                 <div className="space-y-4 sm:space-y-6">
-                  {/* Property Status Selection */}
+                  {/* Completion status */}
                   <div>
-                    <Label className="text-base font-semibold mb-4 block">Property Status</Label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card
-                        className={cn(
-                          "p-4 cursor-pointer transition-all border-2",
-                          propertyData.propertyStatus === 'ready' 
-                            ? 'border-primary bg-primary/10' 
-                            : 'border-border hover:border-primary/50'
-                        )}
+                    <Label className="text-base font-semibold mb-4 block">Completion status</Label>
+                    <div className="inline-flex rounded-xl border border-border bg-card p-1">
+                      <button
+                        type="button"
                         onClick={() => updatePropertyData('propertyStatus', 'ready')}
-                      >
-                        <div className="text-center">
-                          <Home className="h-8 w-8 mx-auto mb-2 text-primary" />
-                          <h3 className="font-semibold">Ready Property</h3>
-                          <p className="text-xs text-muted-foreground">Existing completed property</p>
-                        </div>
-                      </Card>
-                      
-                      <Card
                         className={cn(
-                          "p-4 cursor-pointer transition-all border-2",
-                          propertyData.propertyStatus === 'off-plan' 
-                            ? 'border-primary bg-primary/10' 
-                            : 'border-border hover:border-primary/50'
+                          'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                          propertyData.propertyStatus === 'ready'
+                            ? 'bg-primary text-white'
+                            : 'text-foreground hover:bg-muted'
                         )}
+                        aria-pressed={propertyData.propertyStatus === 'ready'}
+                      >
+                        <Home className={cn('h-5 w-5', propertyData.propertyStatus === 'ready' ? 'text-white' : 'text-primary')} />
+                        Completed
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => updatePropertyData('propertyStatus', 'off-plan')}
+                        className={cn(
+                          'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                          propertyData.propertyStatus === 'off-plan'
+                            ? 'bg-primary text-white'
+                            : 'text-foreground hover:bg-muted'
+                        )}
+                        aria-pressed={propertyData.propertyStatus === 'off-plan'}
                       >
-                        <div className="text-center">
-                          <HardHat className="h-8 w-8 mx-auto mb-2 text-primary" />
-                          <h3 className="font-semibold">Off-Plan Property</h3>
-                          <p className="text-xs text-muted-foreground">Under construction</p>
+                        <HardHat className={cn('h-5 w-5', propertyData.propertyStatus === 'off-plan' ? 'text-white' : 'text-primary')} />
+                        Off-plan
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Name/Address, Size and Off-plan details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {propertyData.propertyStatus === 'off-plan' && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Select
+                              value={propertyData.handoverBy ?? ''}
+                              onValueChange={(v) => updatePropertyData('handoverBy', v === 'any' ? null : v)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Handover By" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="any">Any</SelectItem>
+                                {[
+                                  'Q3 2025','Q4 2025',
+                                  'Q1 2026','Q2 2026','Q3 2026','Q4 2026',
+                                  '2027',
+                                  '2028','2029','2030','2031',
+                                ].map((q) => (
+                                  <SelectItem key={q} value={q}>{q}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Pre-handover Payment (%)</Label>
+                            <div className="mt-3">
+                              <Slider
+                                value={[propertyData.preHandoverPercent]}
+                                onValueChange={(v) => updatePropertyData('preHandoverPercent', v[0])}
+                                min={0}
+                                max={100}
+                                step={1}
+                              />
+                              <div className="mt-2 text-xs text-muted-foreground flex justify-between">
+                                <span>0%</span>
+                                <span>{propertyData.preHandoverPercent}%</span>
+                                <span>100%</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </Card>
+                      </>
+                    )}
+
+                    <div className={propertyData.propertyStatus === 'off-plan' ? 'md:col-span-2' : ''}>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Input
+                          id="property-name"
+                          placeholder="Property name / address"
+                          value={propertyData.name}
+                          onChange={(e) => updatePropertyData('name', e.target.value)}
+                          className="md:col-span-2"
+                        />
+                        <Input
+                          id="property-size-sqft"
+                          inputMode="numeric"
+                          placeholder="Size (sqft)"
+                          value={propertyData.sizeSqft ? propertyData.sizeSqft.toLocaleString() : ''}
+                          onChange={(e) => {
+                            const digitsOnly = e.target.value.replace(/[^0-9]/g, '');
+                            const next = Number(digitsOnly || '0');
+                            updatePropertyData('sizeSqft', next);
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Property Details */}
-                  <div>
-                    <Label htmlFor="property-name">Property Name/Address</Label>
-                    <Input
-                      id="property-name"
-                      placeholder="e.g., Marina Heights Tower"
-                      value={propertyData.name}
-                      onChange={(e) => updatePropertyData('name', e.target.value)}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label className="text-base font-semibold mb-3 block">Purchase Price Input Method</Label>
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <Button
-                        variant={propertyData.priceInputMethod === 'slider' ? 'default' : 'outline'}
-                        onClick={() => updatePropertyData('priceInputMethod', 'slider')}
-                        className="h-12"
-                      >
-                        Slider
-                      </Button>
-                      <Button
-                        variant={propertyData.priceInputMethod === 'manual' ? 'default' : 'outline'}
-                        onClick={() => updatePropertyData('priceInputMethod', 'manual')}
-                        className="h-12"
-                      >
-                        Manual Input
-                      </Button>
+                  {/* Area and Property Type */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <CommunityCombobox
+                        value={propertyData.area}
+                        onChange={(v) => updatePropertyData('area', v)}
+                        options={(allCommunities ?? dubaiAreas)}
+                        placeholder="Select community"
+                      />
                     </div>
 
-                    {propertyData.priceInputMethod === 'slider' ? (
-                      <div className="space-y-3">
+                    <div>
+                      <CommunityCombobox
+                        value={propertyData.propertyType}
+                        onChange={(v) => updatePropertyData('propertyType', v)}
+                        options={[...bayutPropertyTypes.residential, ...bayutPropertyTypes.commercial]}
+                        groups={[
+                          { label: 'Residential', items: [...bayutPropertyTypes.residential] },
+                          { label: 'Commercial', items: [...bayutPropertyTypes.commercial] },
+                        ]}
+                        placeholder="Select property type"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Purchase Price */}
+                  <div>
+                    <Label className="text-base font-semibold mb-3 block">Price (AED)</Label>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-2 rounded-md bg-muted text-sm font-medium">AED</span>
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="Enter price"
+                          value={propertyData.price.toLocaleString()}
+                          onChange={(e) => {
+                            const digitsOnly = e.target.value.replace(/[^0-9]/g, '');
+                            const next = Number(digitsOnly || '0');
+                            updatePropertyData('price', next);
+                          }}
+                          onBlur={() => {
+                            const min = 100000;
+                            const max = 20000000;
+                            const clamped = Math.min(max, Math.max(min, propertyData.price || 0));
+                            if (clamped !== propertyData.price) {
+                              updatePropertyData('price', clamped);
+                            }
+                          }}
+                          className="mt-0"
+                        />
+                      </div>
+                      <div className="flex-1 md:pt-1">
                         <Slider
                           value={[propertyData.price]}
                           onValueChange={(value) => updatePropertyData('price', value[0])}
-                          max={10000000}
-                          min={300000}
+                          max={20000000}
+                          min={100000}
                           step={50000}
                           className="w-full"
                         />
-                        <div className="text-center">
-                          <span className="text-2xl font-bold text-primary">
-                            AED {propertyData.price.toLocaleString()}
-                          </span>
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>AED 100k</span>
+                          <span>AED 20M</span>
                         </div>
                       </div>
-                    ) : (
-                      <Input
-                        type="number"
-                        placeholder="Enter purchase price in AED"
-                        value={propertyData.price}
-                        onChange={(e) => updatePropertyData('price', Number(e.target.value))}
-                        className="mt-2"
-                      />
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Type</Label>
-                      <Select value={propertyData.propertyType} onValueChange={(value) => updatePropertyData('propertyType', value)}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {propertyTypes.map((type) => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>Area</Label>
-                      <Select value={propertyData.area} onValueChange={(value) => updatePropertyData('area', value)}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Select area" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {dubaiAreas.map((area) => (
-                            <SelectItem key={area} value={area}>{area}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
 
-                  {/* Navigation Buttons */}
-                  <div className="pt-6 border-t border-gray-200">
-                    <div className="flex justify-center items-center gap-6">
-                      <Button
-                        variant="outline"
-                        onClick={prevStep}
-                        className="flex items-center gap-2 px-6 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
-                      >
-                        <ArrowLeft className="h-5 w-5" />
-                        Previous
-                      </Button>
+                  {/* Beds & Baths (dropdowns in app style) */}
+                  <div>
+                    <Label className="text-base font-semibold mb-3 block">Beds & Baths</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Beds */}
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Beds</Label>
+                        <Select
+                          value={String(propertyData.bedrooms)}
+                          onValueChange={(val) => {
+                            if (val === 'studio' || val === '8+') {
+                              updatePropertyData('bedrooms', val);
+                            } else {
+                              updatePropertyData('bedrooms', parseInt(val, 10));
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select beds" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="studio">Studio</SelectItem>
+                            {['1','2','3','4','5','6','7'].map((b) => (
+                              <SelectItem key={b} value={b}>{b}</SelectItem>
+                            ))}
+                            <SelectItem value="8+">8+</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                      <Button
-                        onClick={nextStep}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                      >
-                        Next
-                        <ArrowRight className="h-5 w-5 ml-2" />
-                      </Button>
+                      {/* Baths */}
+                      <div>
+                        <Label className="text-sm text-muted-foreground">Baths</Label>
+                        <Select
+                          value={String(propertyData.bathrooms)}
+                          onValueChange={(val) => {
+                            if (val === '6+') {
+                              updatePropertyData('bathrooms', val);
+                            } else {
+                              updatePropertyData('bathrooms', parseInt(val, 10));
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Select baths" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['1','2','3','4','5'].map((b) => (
+                              <SelectItem key={b} value={b}>{b}</SelectItem>
+                            ))}
+                            <SelectItem value="6+">6+</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Bottom Next */}
+                  <div className="pt-2 flex justify-center">
+                    <Button onClick={nextStep} className="h-9 px-4">Next</Button>
+                  </div>
+
                 </div>
               </div>
             )}
@@ -581,8 +656,8 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                   </div>
                 </div>
                 <div className="text-center mb-4 sm:mb-6">
-                  <Calculator className="h-8 w-8 sm:h-12 sm:w-12 text-secondary mx-auto mb-2" />
-                  <h2 className="text-xl sm:text-2xl font-bold text-gradient-primary">Financing</h2>
+                  <Calculator className="h-8 w-8 sm:h-12 sm:w-12 text-primary mx-auto mb-2" />
+                  <h2 className="text-xl sm:text-2xl font-bold">Financing</h2>
                   <p className="text-sm sm:text-base text-muted-foreground">Configure your loan and payment terms</p>
                 </div>
 
@@ -692,23 +767,21 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                   </div>
 
                   {/* Navigation Buttons */}
-                  <div className="pt-6 border-t border-gray-200">
+                  <div className="pt-6 border-t border-gray-200 mb-24">
                     <div className="flex justify-center items-center gap-6">
                       <Button
                         variant="outline"
                         onClick={prevStep}
-                        className="flex items-center gap-2 px-6 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
+                        className="h-9 px-4"
                       >
-                        <ArrowLeft className="h-5 w-5" />
                         Previous
                       </Button>
 
                       <Button
                         onClick={nextStep}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                        className="h-9 px-4"
                       >
                         Next
-                        <ArrowRight className="h-5 w-5 ml-2" />
                       </Button>
                     </div>
                   </div>
@@ -734,7 +807,7 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                 </div>
                 <div className="text-center mb-4 sm:mb-6">
                   <MapPin className="h-8 w-8 sm:h-12 sm:w-12 text-success mx-auto mb-2" />
-                  <h2 className="text-xl sm:text-2xl font-bold text-gradient-primary">Revenue</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">Revenue</h2>
                   <p className="text-sm sm:text-base text-muted-foreground">Expected rental income and occupancy</p>
                 </div>
 
@@ -824,23 +897,21 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                   </div>
 
                   {/* Navigation Buttons */}
-                  <div className="pt-6 border-t border-gray-200">
+                  <div className="pt-6 border-t border-gray-200 mb-24">
                     <div className="flex justify-center items-center gap-6">
                       <Button
                         variant="outline"
                         onClick={prevStep}
-                        className="flex items-center gap-2 px-6 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
+                        className="h-9 px-4"
                       >
-                        <ArrowLeft className="h-5 w-5" />
                         Previous
                       </Button>
 
                       <Button
                         onClick={nextStep}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                        className="h-9 px-4"
                       >
                         Next
-                        <ArrowRight className="h-5 w-5 ml-2" />
                       </Button>
                     </div>
                   </div>
@@ -866,7 +937,7 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                 </div>
                 <div className="text-center mb-4 sm:mb-6">
                   <Settings className="h-8 w-8 sm:h-12 sm:w-12 text-warning mx-auto mb-2" />
-                  <h2 className="text-xl sm:text-2xl font-bold text-gradient-primary">Expenses</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">Expenses</h2>
                   <p className="text-sm sm:text-base text-muted-foreground">Operating costs and maintenance</p>
                 </div>
 
@@ -998,23 +1069,21 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                   </div>
 
                   {/* Navigation Buttons */}
-                  <div className="pt-6 border-t border-gray-200">
+                  <div className="pt-6 border-t border-gray-200 mb-24">
                     <div className="flex justify-center items-center gap-6">
                       <Button
                         variant="outline"
                         onClick={prevStep}
-                        className="flex items-center gap-2 px-6 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
+                        className="h-9 px-4"
                       >
-                        <ArrowLeft className="h-5 w-5" />
                         Previous
                       </Button>
 
                       <Button
                         onClick={nextStep}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                        className="h-9 px-4"
                       >
                         Next
-                        <ArrowRight className="h-5 w-5 ml-2" />
                       </Button>
                     </div>
                   </div>
@@ -1035,7 +1104,7 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                 </div>
                 <div className="text-center mb-4 sm:mb-6">
                   <TrendingUp className="h-8 w-8 sm:h-12 sm:w-12 text-accent mx-auto mb-2" />
-                  <h2 className="text-xl sm:text-2xl font-bold text-gradient-primary">Growth & Exit Parameters</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">Growth & Exit Parameters</h2>
                   <p className="text-sm sm:text-base text-muted-foreground">Long-term projections and exit strategy</p>
                 </div>
 
@@ -1335,29 +1404,21 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
                   </div>
 
                   {/* Navigation Buttons */}
-                  <div className="pt-6 border-t border-gray-200">
+                  <div className="pt-6 border-t border-gray-200 mb-24">
                     <div className="flex justify-center items-center gap-6">
                       <Button
                         variant="outline"
                         onClick={prevStep}
-                        className="flex items-center gap-2 px-6 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
+                        className="h-9 px-4"
                       >
-                        <ArrowLeft className="h-5 w-5" />
                         Previous
                       </Button>
 
                       <Button
-                        onClick={handleAnalyze}
-                        disabled={isAnalyzing}
-                        className={cn(
-                          "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-3.5 py-2 text-sm sm:text-base font-semibold shadow-sm hover:shadow-md rounded-full w-full sm:w-auto flex items-center justify-center gap-2",
-                          isAnalyzing ? "opacity-50 cursor-not-allowed" : ""
-                        )}
+                        onClick={() => onAnalyze(propertyData)}
+                        className="h-9 px-4"
                       >
-                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" />
-                        </svg>
-                        {isAnalyzing ? 'Analyzing…' : 'Run Investment Analysis'}
+                        Next
                       </Button>
                     </div>
                   </div>
@@ -1539,7 +1600,6 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
         </DialogContent>
       </Dialog>
       <Toaster />
-      </div>
     </>
   );
 }

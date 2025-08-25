@@ -3,35 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dubai Property Analyzer - Investment Calculator & Analysis Tool</title>
-    <meta name="description" content="Professional Dubai real estate investment calculator. Analyze property ROI, cash flow, rental yields, and get AI-powered insights for Dubai property investments." />
-    <meta name="author" content="Dubai Property Analyzer" />
+    <title>Smart Property Analyzer — Dubai | Professional ROI, Cash Flow & IRR Analysis</title>
+    <meta name="description" content="Professional-grade ROI, cash flow & IRR analysis for Dubai real estate. Data-driven projections and insights built for Dubai investors." />
+    <meta name="author" content="Smart Property Analyzer" />
     <meta name="keywords" content="Dubai property investment, real estate calculator, ROI analysis, rental yield, cash flow, property analyzer" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Dubai Property Analyzer - Professional Investment Tool" />
-    <meta property="og:description" content="Analyze Dubai real estate investments with professional-grade calculations, market insights, and AI recommendations." />
+    <meta property="og:title" content="Smart Property Analyzer — Dubai" />
+    <meta property="og:description" content="Professional-grade ROI, cash flow & IRR analysis for Dubai real estate." />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@dubaipropertyanalyzer" />
-    <meta name="twitter:title" content="Dubai Property Analyzer" />
-    <meta name="twitter:description" content="Professional Dubai real estate investment calculator with Smart insights" />
+    <meta name="twitter:site" content="@smartpropertyanalyzer" />
+    <meta name="twitter:title" content="Smart Property Analyzer — Dubai" />
+    <meta name="twitter:description" content="Professional-grade ROI, cash flow & IRR analysis for Dubai real estate" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
     <!-- Additional SEO -->
-    <link rel="canonical" href="https://dubaipropertyanalyzer.com/" />
+    <link rel="canonical" href="https://smartpropertyanalyzer.com/ae/dubai" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#3b82f6" />
+    <meta name="theme-color" content="#2563eb" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="manifest" href="/site.webmanifest">
+    <!-- Favicons (SVG + ICO) with version busting -->
+    <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml">
+    <link rel="icon" href="/favicon-16x16.svg?v=3" sizes="16x16" type="image/svg+xml">
+    <link rel="icon" href="/favicon-32x32.svg?v=3" sizes="32x32" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg?v=3" sizes="180x180">
+    <link rel="icon" href="/android-chrome-192x192.svg?v=3" sizes="192x192" type="image/svg+xml">
+    <link rel="icon" href="/android-chrome-512x512.svg?v=3" sizes="512x512" type="image/svg+xml">
+    <link rel="manifest" href="/site.webmanifest?v=3">
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,5 +44,89 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Animate favicon as PNG (via canvas) to avoid SVG rendering issues in some browsers
+      (function() {
+        try {
+          const ensureLink = () => {
+            let link = document.getElementById('dynamic-favicon');
+            if (!link) {
+              link = document.createElement('link');
+              link.id = 'dynamic-favicon';
+              link.rel = 'icon';
+              link.type = 'image/png';
+              link.sizes = '32x32';
+              document.head.appendChild(link);
+            }
+            return link;
+          };
+
+          const drawFrame = (offset) => {
+            const size = 32; // draw at 32x32
+            const scale = size / 48;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return null;
+            // background rounded rect
+            const radius = 8 * scale;
+            ctx.fillStyle = '#2563eb';
+            ctx.beginPath();
+            const w = size, h = size;
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(w - radius, 0);
+            ctx.quadraticCurveTo(w, 0, w, radius);
+            ctx.lineTo(w, h - radius);
+            ctx.quadraticCurveTo(w, h, w - radius, h);
+            ctx.lineTo(radius, h);
+            ctx.quadraticCurveTo(0, h, 0, h - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+            // bars
+            const barHeights = [8,16,12,20,6].map(v => v * scale);
+            const barW = 3 * scale;
+            const gap = 2 * scale;
+            const leftInset = (size - (5 * barW + 4 * gap)) / 2;
+            const bottomInset = 8 * scale;
+            ctx.fillStyle = '#ffffff';
+            for (let i = 0; i < 5; i++) {
+              const dy = (i % 2 === 0 ? 1 : -1) * offset * scale;
+              const bh = Math.max(4 * scale, barHeights[i] + dy);
+              const x = leftInset + i * (barW + gap);
+              const y = size - bottomInset - bh;
+              const r = 1 * scale;
+              // rounded bar
+              ctx.beginPath();
+              ctx.moveTo(x + r, y);
+              ctx.lineTo(x + barW - r, y);
+              ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+              ctx.lineTo(x + barW, y + bh - r);
+              ctx.quadraticCurveTo(x + barW, y + bh, x + barW - r, y + bh);
+              ctx.lineTo(x + r, y + bh);
+              ctx.quadraticCurveTo(x, y + bh, x, y + bh - r);
+              ctx.lineTo(x, y + r);
+              ctx.quadraticCurveTo(x, y, x + r, y);
+              ctx.closePath();
+              ctx.fill();
+            }
+            return canvas.toDataURL('image/png');
+          };
+
+          const link = ensureLink();
+          const frames = [0, 1.5, 3, 1.5];
+          let idx = 0;
+          const update = () => {
+            const dataUrl = drawFrame(frames[idx % frames.length]);
+            if (dataUrl) link.href = dataUrl;
+            idx++;
+          };
+          update();
+          setInterval(update, 700);
+        } catch(e) {}
+      })();
+    </script>
   </body>
 </html>

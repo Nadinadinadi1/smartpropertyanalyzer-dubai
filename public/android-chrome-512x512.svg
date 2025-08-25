@@ -1,29 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="android512Grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1D4ED8"/>
-      <stop offset="50%" stop-color="#1E3A8A"/>
-      <stop offset="100%" stop-color="#312E81"/>
-    </linearGradient>
-  </defs>
-  
-  <!-- Background with scaled border-radius -->
-  <rect width="512" height="512" rx="123" fill="url(#android512Grad)"/>
-  
-  <!-- Pulsing dot - scaled for 512x512 -->
-  <circle cx="419" cy="93" r="31" fill="#FBBF24" stroke="white" stroke-width="10"/>
-  
-  <!-- SPA Text - scaled for 512x512 -->
-  <text 
-    x="256" 
-    y="320" 
-    text-anchor="middle" 
-    fill="white" 
-    font-size="102" 
-    font-weight="bold" 
-    letter-spacing="5"
-    font-family="system-ui, -apple-system, sans-serif"
-  >
-    SPA
-  </text>
+  <rect width="512" height="512" rx="86" fill="#2563eb"/>
+  <!-- scale 48→512 ≈ 10.6667. bar width ~32, gap ~21, radius ~11, bottom inset ~85 -->
+  <rect x="150" y="427" width="32" height="85" rx="11" fill="#ffffff"/>
+  <rect x="203" y="341" width="32" height="171" rx="11" fill="#ffffff"/>
+  <rect x="256" y="384" width="32" height="128" rx="11" fill="#ffffff"/>
+  <rect x="309" y="299" width="32" height="213" rx="11" fill="#ffffff"/>
+  <rect x="362" y="448" width="32" height="64" rx="11" fill="#ffffff"/>
 </svg>

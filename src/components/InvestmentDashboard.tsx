@@ -26,10 +26,7 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   ResponsiveContainer, 
-  PieChart as RechartsPieChart, 
-  Cell, 
   BarChart, 
   Bar,
   Legend,
@@ -37,14 +34,23 @@ import {
   Area,
   ReferenceLine
 } from 'recharts';
+// Alias Recharts Tooltip to avoid conflict with UI Tooltip
+import { Tooltip as RechartsTooltip } from 'recharts';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface PropertyData {
   propertyStatus: 'ready' | 'off-plan';
   name: string;
+  sizeSqft: number;
   price: number;
   priceInputMethod: 'slider' | 'manual';
   propertyType: string;
   area: string;
+  handoverBy?: string | null;
+  preHandoverPercent?: number;
+  bedrooms: number | 'studio' | '8+';
+  bathrooms: number | '6+';
   downPayment: number;
   agentFeePercent: number;
   loanTerm: number;
@@ -87,28 +93,117 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
 
   // Insights disabled for beta: remove loader state
 
-  // Calculate investment metrics
-  const downPaymentAmount = propertyData.price * (propertyData.downPayment / 100);
-  const additionalCosts = (propertyData.price * (propertyData.agentFeePercent / 100)) + (propertyData.dldFeeIncluded ? propertyData.price * 0.04 : 0) + 5000; // Agent + DLD + legal
+  // Guards & clamps (silent sanity checks for beta)
+  const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, Number.isFinite(n) ? n : 0));
+  const priceSafe = clamp(propertyData.price, 100000, 20000000);
+  const downPaymentPct = clamp(propertyData.downPayment, 0, 100);
+  const interestRateSafe = clamp(propertyData.interestRate, 0, 20);
+  const loanTermSafe = clamp(propertyData.loanTerm, 1, 40);
+  const monthlyRentSafe = Math.max(0, Number.isFinite(propertyData.monthlyRent) ? propertyData.monthlyRent : 0);
+  const vacancySafe = clamp(propertyData.vacancyRate, 0, 100);
+  const additionalIncomeSafe = Math.max(0, Number.isFinite(propertyData.additionalIncome) ? propertyData.additionalIncome : 0);
+
+  // Calculate investment metrics (using safe values)
+  const downPaymentAmount = priceSafe * (downPaymentPct / 100);
+  const additionalCosts = (priceSafe * (propertyData.agentFeePercent / 100)) + (propertyData.dldFeeIncluded ? priceSafe * 0.04 : 0) + 5000; // Agent + DLD + legal
   const totalInvestment = downPaymentAmount + additionalCosts;
-  const loanAmount = propertyData.price - downPaymentAmount;
-  const monthlyPayment = calculateMonthlyPayment(loanAmount, propertyData.interestRate, propertyData.loanTerm);
-  const effectiveRent = propertyData.monthlyRent * ((100 - propertyData.vacancyRate) / 100);
-  const totalMonthlyIncome = effectiveRent + propertyData.additionalIncome;
+  const loanAmount = priceSafe - downPaymentAmount;
+  const monthlyPayment = calculateMonthlyPayment(loanAmount, interestRateSafe, loanTermSafe);
+  const effectiveRent = monthlyRentSafe * ((100 - vacancySafe) / 100);
+  const totalMonthlyIncome = effectiveRent + additionalIncomeSafe;
   const monthlyExpenses = calculateMonthlyExpenses(propertyData);
   const monthlyCashFlow = totalMonthlyIncome - monthlyPayment - monthlyExpenses;
   const annualCashFlow = monthlyCashFlow * 12;
   
   // Improved cash-on-cash return (using actual cash flow, not just rent)
-  const cashOnCashReturn = (annualCashFlow / totalInvestment) * 100;
+  const cashOnCashReturn = totalInvestment > 0 ? (annualCashFlow / totalInvestment) * 100 : 0;
   
   // Yield calculations
-  const grossYield = ((propertyData.monthlyRent + propertyData.additionalIncome) * 12 / propertyData.price) * 100;
-  const netYield = ((totalMonthlyIncome * 12 - monthlyExpenses * 12) / propertyData.price) * 100;
+  const grossYield = priceSafe > 0 ? ((monthlyRentSafe + additionalIncomeSafe) * 12 / priceSafe) * 100 : 0;
+  const netYield = priceSafe > 0 ? (((totalMonthlyIncome - monthlyExpenses) * 12) / priceSafe) * 100 : 0;
   
   // Additional metrics
-  const debtToEquityRatio = (loanAmount / downPaymentAmount) * 100;
+  // D/E computed but not displayed (beta) – kept for potential future use
+  const debtToEquityRatio = totalInvestment > 0 ? (loanAmount / totalInvestment) * 100 : 0;
+  // DSCR: NOI / Debt Service (use monthly values to avoid rounding)
+  const monthlyNOI = totalMonthlyIncome - monthlyExpenses;
+  const dscr = monthlyPayment > 0 ? (monthlyNOI / monthlyPayment) : NaN;
+  // Cap rate: annual NOI / price
+  const capRate = priceSafe > 0 ? ((monthlyNOI * 12) / priceSafe) * 100 : NaN;
+
+  // Safe display helpers
+  const ltvPct = priceSafe > 0 ? (loanAmount / priceSafe) * 100 : NaN;
+  const expenseRatioPct = effectiveRent > 0 ? (monthlyExpenses / effectiveRent) * 100 : NaN;
+  const fmtPct1 = (v: number) => Number.isFinite(v) ? v.toFixed(1) + '%' : '—';
+  const fmtX2 = (v: number) => Number.isFinite(v) ? v.toFixed(2) : '—';
   const monthlyExpenseRatio = (monthlyExpenses / effectiveRent) * 100;
+
+  // Risk rating (Low/Medium/High with emoji) – weighted model per spec
+  const riskRating = (() => {
+    const ltv = Number.isFinite(ltvPct) ? ltvPct : 100;
+    const exp = Number.isFinite(expenseRatioPct) ? expenseRatioPct : 100;
+    const dscrVal = Number.isFinite(dscr) ? dscr : 0;
+    // Inline rental recommendation estimate (avoids ordering issues)
+    const targetNetYieldForRisk = 6.0;
+    const monthlyOpExForRisk = (propertyData.monthlyRent * (propertyData.maintenanceRate / 100)) +
+                               (propertyData.monthlyRent * (propertyData.managementFee / 100)) + propertyData.managementBaseFee +
+                               (propertyData.insurance / 12) + (propertyData.otherExpenses / 12);
+    const requiredAnnualRentForRisk = (targetNetYieldForRisk / 100 * priceSafe) + (monthlyOpExForRisk * 12);
+    let suggestedRentForRisk = requiredAnnualRentForRisk / 12;
+    if (propertyData.propertyType.toLowerCase().includes('villa')) {
+      suggestedRentForRisk *= 1.15;
+    } else if (propertyData.propertyType.toLowerCase().includes('penthouse')) {
+      suggestedRentForRisk *= 1.25;
+    }
+    if (propertyData.area.toLowerCase().includes('downtown') || propertyData.area.toLowerCase().includes('marina')) {
+      suggestedRentForRisk *= 1.20;
+    }
+    const rentGapPct = monthlyRentSafe > 0 ? ((suggestedRentForRisk - monthlyRentSafe) / monthlyRentSafe) * 100 : 0;
+    const yieldSpread = Number.isFinite(capRate) ? (capRate - interestRateSafe) : -Infinity;
+
+    // Weights
+    const W = { dscr: 0.40, spread: 0.25, ltv: 0.20, expense: 0.10, rentGap: 0.05 } as const;
+
+    // Pillar scorings: 1 = low risk, 0.5 = medium, 0 = high
+    const dscrScore = dscrVal >= 1.5 ? 1 : dscrVal >= 1.25 ? 0.5 : 0;
+    const spreadScore = yieldSpread >= 2.5 ? 1 : yieldSpread >= 1 ? 0.5 : 0; // negative implicitly 0
+    const ltvScore = ltv <= 60 ? 1 : ltv <= 70 ? 0.5 : 0;
+    const expenseScore = exp <= 25 ? 1 : exp <= 35 ? 0.5 : 0;
+    const rentGapAbs = Math.abs(rentGapPct);
+    const rentGapScore = rentGapAbs < 10 ? 0.5 : (rentGapPct <= -10 ? 1 : 0); // ≤ -10% better than suggested
+
+    // Weighted base score (0..100)
+    let score100 =
+      dscrScore * W.dscr * 100 +
+      spreadScore * W.spread * 100 +
+      ltvScore * W.ltv * 100 +
+      expenseScore * W.expense * 100 +
+      rentGapScore * W.rentGap * 100;
+
+    // Gating & cashflow adjustment
+    if (monthlyCashFlow < 0) score100 -= 10; // malus
+    else if (monthlyCashFlow < 500) score100 -= 5;
+    else if (monthlyCashFlow >= 1000) score100 += 5;
+
+    // Clamp
+    score100 = Math.max(0, Math.min(100, score100));
+
+    // Map to levels
+    let level = 'Medium';
+    let emoji = '🟡';
+    let className = 'bg-warning';
+    if (score100 >= 70) { level = 'Low'; emoji = '🟢'; className = 'bg-success'; }
+    else if (score100 <= 35) { level = 'High'; emoji = '🔴'; className = 'bg-danger'; }
+
+    return { level, emoji, className, score100, breakdown: {
+      dscr: { value: dscrVal, weight: W.dscr, score: dscrScore },
+      spread: { value: yieldSpread, weight: W.spread, score: spreadScore },
+      ltv: { value: ltv, weight: W.ltv, score: ltvScore },
+      expense: { value: exp, weight: W.expense, score: expenseScore },
+      rentGap: { value: rentGapPct, weight: W.rentGap, score: rentGapScore },
+      cashflowAdj: monthlyCashFlow < 0 ? -10 : monthlyCashFlow < 500 ? -5 : monthlyCashFlow >= 1000 ? 5 : 0,
+    } };
+  })();
 
   // Calculate IRR and ROI
   const projectionData = generateDetailedProjectionData(propertyData, totalInvestment);
@@ -256,10 +351,11 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       details: cashFlowScore.details
     });
     
-    // 2. Yield Analysis (30% weight - 3 points)
+    // 2. Yield & Pricing Alignment (30% weight - 3 points)
     const yieldScore = (() => {
       let points = 0;
       const details: string[] = [];
+      const rentGapPct = monthlyRentSafe > 0 ? ((suggestedRentalPrice.monthlyRent - monthlyRentSafe) / monthlyRentSafe) * 100 : 0;
       
       if (netYield > 5) {
         points += 1;
@@ -268,16 +364,22 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
         details.push('⚠️ Low net yield');
       }
       
-      if (netYield > 7) {
-        points += 1;
-        details.push('✅ Excellent net yield (>7%)');
-      }
-      
       if (grossYield > 8) {
         points += 1;
         details.push('✅ Strong gross yield (>8%)');
       } else {
         details.push('⚠️ Moderate gross yield');
+      }
+
+      // Pricing alignment with recommendation (within ±10% or above recommended)
+      if (Math.abs(rentGapPct) < 10) {
+        points += 1;
+        details.push('✅ Pricing aligned with recommendation (within ±10%)');
+      } else if (rentGapPct <= -10) {
+        points += 1;
+        details.push('✅ Current rent above recommendation (favorable)');
+      } else {
+        details.push('⚠️ Rent ≥ 10% below recommendation');
       }
       
       return { points, details };
@@ -285,7 +387,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
     
     score += yieldScore.points;
     scoreDetails.push({
-      category: 'Yield',
+      category: 'Yield & Pricing',
       points: yieldScore.points,
       maxPoints: 3,
       details: yieldScore.details
@@ -296,11 +398,12 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       let points = 0;
       const details: string[] = [];
       
-      if (debtToEquityRatio < 80) {
+      // Use LTV proxy instead of D/E for risk in beta
+      if ((100 - propertyData.downPayment) <= 70) {
         points += 1;
-        details.push('✅ Conservative debt ratio (<80%)');
+        details.push('✅ Conservative LTV (≤70%)');
       } else {
-        details.push('⚠️ High debt ratio');
+        details.push('⚠️ Higher LTV (>70%)');
       }
       
       if (monthlyExpenseRatio < 30) {
@@ -348,7 +451,6 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
   };
 
   const { score: investmentScore, scoreDetails } = getInvestmentScore();
-  const riskLevel = investmentScore >= 8 ? 'Low' : investmentScore >= 6 ? 'Medium' : 'High';
 
     const filteredProjectionData = selectedYear === '10' ? projectionData :
     projectionData.filter(item => item.year <= parseInt(selectedYear));
@@ -400,7 +502,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
             <button
               onClick={() => document.getElementById('investment-overview')?.scrollIntoView({ behavior: 'smooth' })}
               className={`group relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 ${activeSection==='investment-overview' ? 'bg-purple-200' : 'bg-purple-100/40 dark:bg-purple-900/20 hover:bg-purple-200/80 dark:hover:bg-purple-800/60'}`}
-              aria-label="Investment Overview"
+              aria-label="Overview"
             >
               <Home className="w-5 h-5 text-purple-600/70 dark:text-purple-400/70 group-hover:text-purple-700 dark:group-hover:text-purple-300" />
               <span className="pointer-events-none absolute right-full mr-2 px-2 py-1 rounded-md text-xs font-medium bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity">Overview</span>
@@ -423,38 +525,6 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
             </button>
           </nav>
         </div>
-      </div>
-
-      {/* Logo and Theme Toggle */}
-        <div className="absolute top-4 left-4 z-10">
-        <button
-          onClick={() => window.location.hash = '#analyze'}
-          className="relative hover:scale-105 transition-transform duration-200"
-        >
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-md">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            {/* BETA Badge */}
-            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md border border-white">
-              BETA
-            </div>
-        </button>
-          </div>
-
-      {/* Theme Toggle - Top Right */}
-      <div className="absolute top-4 right-4 z-10">
-        <button
-          onClick={() => {
-            // Toggle theme logic here
-            document.documentElement.classList.toggle('dark');
-          }}
-          className="w-10 h-10 bg-card/80 backdrop-blur-sm border border-border rounded-xl flex items-center justify-center shadow-md hover:bg-card transition-colors"
-        >
-          <Sun className="h-5 w-5 text-primary dark:hidden" />
-          <Moon className="h-5 w-5 text-primary hidden dark:block" />
-        </button>
         </div>
         
       {/* Header */}
@@ -477,7 +547,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       </div>
 
       {/* Navigation Menu */}
-      <div className="bg-white rounded-2xl p-3 sm:p-6 border border-blue-200 shadow-lg sticky top-0 z-10 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl p-3 sm:p-6 border border-blue-200 shadow-lg sticky top-16 z-10 backdrop-blur-sm">
         <div className="flex flex-wrap gap-2 justify-center">
            <div className="text-sm font-medium text-muted-foreground">📊 Property Analyses</div>
         </div>
@@ -1080,34 +1150,52 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
         </div>
       </div>
 
-      {/* Investment Overview - Enhanced (moved directly under Key Metrics) */}
+      {/* Overview - Enhanced (moved directly under Key Metrics) */}
       <div id="investment-overview" className="bg-white rounded-2xl p-2 sm:p-5 border border-blue-200 shadow-lg leading-tight">
         <div className="flex items-center justify-between mb-2.5 sm:mb-4">
            <div>
-          <h3 className="font-semibold text-sm sm:text-lg">Investment Overview</h3>
+          <h3 className="font-semibold text-sm sm:text-lg">Overview</h3>
           </div>
         </div>
         
-        {/* Property Info Badges */}
+        {/* Property Info Badges - Ordered */}
         <div className="flex flex-wrap gap-1 sm:gap-2 mb-2.5 sm:mb-4">
+          {/* 1. Address/Name */}
           {propertyData.name && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">🏠 {propertyData.name}</Badge>
+          )}
+          {/* 2. Ready/Off-plan */}
             <Badge variant="outline" className="text-[10px] px-2 py-0.5">
-              🏠 {propertyData.name}
-            </Badge>
-          )}
-          {propertyData.propertyType && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
-              🏢 {propertyData.propertyType}
-            </Badge>
-          )}
-          {propertyData.area && (
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
-              📍 {propertyData.area}
-            </Badge>
-          )}
-          <Badge variant="outline" className="text-[10px] px-2 py-0.5">
             {propertyData.propertyStatus === 'ready' ? '🏠 Ready Property' : '🏗️ Off-Plan Property'}
-          </Badge>
+            </Badge>
+          {/* 3. Price */}
+          {propertyData.price > 0 && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">💵 {formatCurrency(propertyData.price)}</Badge>
+          )}
+          {/* 4. Community */}
+          {propertyData.area && (
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5">📍 {propertyData.area}</Badge>
+          )}
+          {/* Rest */}
+          {propertyData.propertyType && (
+            <Badge variant="secondary" className="text-[10px] px-2 py-0.5">🏢 {propertyData.propertyType}</Badge>
+          )}
+          {propertyData.sizeSqft > 0 && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">📐 {propertyData.sizeSqft.toLocaleString()} sqft</Badge>
+          )}
+          {propertyData.bedrooms && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">🛏️ {String(propertyData.bedrooms)}</Badge>
+          )}
+          {propertyData.bathrooms && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">🛁 {String(propertyData.bathrooms)}</Badge>
+          )}
+          {propertyData.propertyStatus === 'off-plan' && propertyData.handoverBy && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">🗓️ Handover {propertyData.handoverBy}</Badge>
+          )}
+          {propertyData.propertyStatus === 'off-plan' && typeof propertyData.preHandoverPercent === 'number' && (
+            <Badge variant="outline" className="text-[10px] px-2 py-0.5">💳 Pre-handover {propertyData.preHandoverPercent}%</Badge>
+          )}
+          
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
@@ -1139,24 +1227,130 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
             <h4 className="font-medium text-accent border-b border-accent/20 pb-1 text-xs sm:text-sm">📊 Key Ratios</h4>
             <div className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center p-2 sm:p-2.5 bg-muted/30 rounded-lg">
-                <span className="text-muted-foreground text-[12px] leading-tight">Loan-to-Value (LTV)</span>
+                <span className="text-muted-foreground text-[12px] leading-tight flex items-center gap-1">Loan-to-Value (LTV)
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="inline-flex items-center justify-center text-[11px] text-accent hover:underline" aria-label="Info LTV">i</button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="max-w-sm text-[11px] leading-snug rounded-lg border border-blue-200 bg-white shadow-xl p-2">
+                        <div className="space-y-2">
+                          <div className="rounded-md bg-blue-50 p-2">
+                            <div className="font-semibold text-blue-800 text-xs mb-1">What it means</div>
+                            <p className="text-blue-900">Percentage of the property value financed with debt. Higher LTV means higher leverage and risk.</p>
+                          </div>
+                          <div className="rounded-md bg-green-50 p-2">
+                            <div className="font-semibold text-green-800 text-xs mb-1">Healthy values</div>
+                            <ul className="text-green-900 space-y-1">
+                              <li>• ≤ 60%: ✅ Excellent</li>
+                              <li>• 60–70%: 🙂 Very good</li>
+                              <li>• 70–80%: ⚠️ Acceptable</li>
+                              <li>• {'>'} 80%: ❌ High leverage</li>
+                            </ul>
+                          </div>
+                        </div>
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <div className="flex items-center gap-1 text-right">
-                  <span className="font-semibold text-[13px] sm:text-sm leading-tight">{((100 - propertyData.downPayment)).toFixed(1)}%</span>
-                  <span className="text-[12px]">{((100 - propertyData.downPayment)) > 80 ? '⚠️' : '✅'}</span>
+                  <span className="font-semibold text-[13px] sm:text-sm leading-tight">{fmtPct1(ltvPct)}</span>
+                  <span className="text-[12px]">
+                    {Number.isFinite(ltvPct) ? (ltvPct <= 60 ? '✅' : ltvPct <= 70 ? '🙂' : ltvPct <= 80 ? '⚠️' : '❌') : '—'}
+                  </span>
+                </div>
+              </div>
+              {/* Debt-to-Equity removed for beta to reduce complexity */}
+              <div className="flex justify-between items-center p-2 sm:p-2.5 bg-muted/30 rounded-lg">
+                <span className="text-muted-foreground text-[12px] leading-tight flex items-center gap-1">Expense Ratio
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="inline-flex items-center justify-center text-[11px] text-accent hover:underline" aria-label="Info Expense Ratio">i</button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="max-w-sm text-[11px] leading-snug rounded-lg border border-blue-200 bg-white shadow-xl p-2">
+                        <div className="space-y-2">
+                          <div className="rounded-md bg-blue-50 p-2">
+                            <div className="font-semibold text-blue-800 text-xs mb-1">What it means</div>
+                            <p className="text-blue-900">Operating expenses as a share of gross rent. Shows cost efficiency of the asset.</p>
+                          </div>
+                          <div className="rounded-md bg-green-50 p-2">
+                            <div className="font-semibold text-green-800 text-xs mb-1">Healthy values</div>
+                            <ul className="text-green-900 space-y-1">
+                              <li>• ≤ 20%: ✅ Excellent</li>
+                              <li>• 20–30%: 🙂 Very good</li>
+                              <li>• 30–40%: ⚠️ Acceptable</li>
+                              <li>• {'>'} 40%: ❌ High expenses</li>
+                            </ul>
+                          </div>
+                        </div>
+                    </PopoverContent>
+                  </Popover>
+                </span>
+                <div className="flex items-center gap-1 text-right">
+                  <span className="font-semibold text-[13px] sm:text-sm leading-tight">{fmtPct1(expenseRatioPct)}</span>
+                  <span className="text-[12px]">
+                    {Number.isFinite(expenseRatioPct) ? (expenseRatioPct <= 20 ? '✅' : expenseRatioPct <= 30 ? '🙂' : expenseRatioPct <= 40 ? '⚠️' : '❌') : '—'}
+                  </span>
                 </div>
               </div>
               <div className="flex justify-between items-center p-2 sm:p-2.5 bg-muted/30 rounded-lg">
-                <span className="text-muted-foreground text-[12px] leading-tight">Debt-to-Equity</span>
+                <span className="text-muted-foreground text-[12px] leading-tight flex items-center gap-1">DSCR
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="inline-flex items-center justify-center text-[11px] text-accent hover:underline" aria-label="Info DSCR">i</button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="max-w-sm text-[11px] leading-snug rounded-lg border border-blue-200 bg-white shadow-xl p-2">
+                      <div className="space-y-2">
+                        <div className="rounded-md bg-blue-50 p-2">
+                          <div className="font-semibold text-blue-800 text-xs mb-1">What it means</div>
+                          <p className="text-blue-900">Debt Service Coverage Ratio = NOI / Debt service. Waarde {'>'} 1.0 betekent dat de cashflow de schuldlast dekt.</p>
+                        </div>
+                        <div className="rounded-md bg-green-50 p-2">
+                          <div className="font-semibold text-green-800 text-xs mb-1">Healthy values</div>
+                          <ul className="text-green-900 space-y-1">
+                            <li>• ≥ 1.50: ✅ Excellent</li>
+                            <li>• 1.25–1.50: 🙂 Strong</li>
+                            <li>• 1.10–1.25: ⚠️ Thin cushion</li>
+                            <li>• {'<'} 1.10: ❌ Insufficient</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <div className="flex items-center gap-1 text-right">
-                  <span className="font-semibold text-[13px] sm:text-sm leading-tight">{debtToEquityRatio.toFixed(1)}%</span>
-                  <span className="text-[12px]">{debtToEquityRatio > 80 ? '⚠️' : '✅'}</span>
+                  <span className="font-semibold text-[13px] sm:text-sm leading-tight">{dscr.toFixed(2)}</span>
+                  <span className="text-[12px]">{dscr >= 1.25 ? '✅' : dscr >= 1.1 ? '⚠️' : '❌'}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center p-2 sm:p-2.5 bg-muted/30 rounded-lg">
-                <span className="text-muted-foreground text-[12px] leading-tight">Expense Ratio</span>
+                <span className="text-muted-foreground text-[12px] leading-tight flex items-center gap-1">Cap Rate
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="inline-flex items-center justify-center text-[11px] text-accent hover:underline" aria-label="Info Cap Rate">i</button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="max-w-sm text-[11px] leading-snug rounded-lg border border-blue-200 bg-white shadow-xl p-2">
+                      <div className="space-y-2">
+                        <div className="rounded-md bg-blue-50 p-2">
+                          <div className="font-semibold text-blue-800 text-xs mb-1">What it means</div>
+                          <p className="text-blue-900">Capitalization Rate = Annual NOI / Purchase price. Indicatie van rendement los van financiering.</p>
+                        </div>
+                        <div className="rounded-md bg-green-50 p-2">
+                          <div className="font-semibold text-green-800 text-xs mb-1">Healthy values (Dubai rental)</div>
+                          <ul className="text-green-900 space-y-1">
+                            <li>• ≥ 7%: ✅ Excellent</li>
+                            <li>• 5–7%: 🙂 Good</li>
+                            <li>• 4–5%: ⚠️ Borderline</li>
+                            <li>• {'<'} 4%: ❌ Low cap</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </span>
                 <div className="flex items-center gap-1 text-right">
-                  <span className="font-semibold text-[13px] sm:text-sm leading-tight">{monthlyExpenseRatio.toFixed(1)}%</span>
-                  <span className="text-[12px]">{monthlyExpenseRatio > 30 ? '⚠️' : '✅'}</span>
+                  <span className="font-semibold text-[13px] sm:text-sm leading-tight">{fmtPct1(capRate)}</span>
+                  <span className="text-[12px]">
+                    {Number.isFinite(capRate) ? (capRate >= 7 ? '✅' : capRate >= 5 ? '🙂' : capRate >= 4 ? '⚠️' : '❌') : '—'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1397,7 +1591,7 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                   return ticks;
                 })()}
               />
-              <Tooltip 
+              <RechartsTooltip 
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
                     const point = filteredProjectionData.find(d => d.year === label);
@@ -1475,216 +1669,8 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
       </div>
 
       {/* Alternative View: 10-Year Wealth Projection (v2) - removed per request */}
-
-      {/* Monthly Expense Breakdown - removed per request */}
-      {false && (
-      <div id="monthly-expenses" className="bg-white rounded-2xl p-4 sm:p-6 border border-blue-200 shadow-lg">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <PieChart className="h-5 w-5 text-primary mr-2" />
-            <div>
-              <h3 className="font-semibold">Monthly Expense Breakdown</h3>
-              {propertyData.name && (
-                <p className="text-xs text-muted-foreground mt-1">{propertyData.name}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">
-              Total: {formatCurrency(expenseData.reduce((sum, item) => sum + item.value, 0))}/month
-            </Badge>
-            <Dialog>
-              <DialogTrigger asChild>
-                <button
-                  className="w-6 h-6 text-muted-foreground hover:text-primary transition-colors"
-                  title="Color legend"
-                >
-                  <Info className="w-5 h-5" />
-                </button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Expense Color Legend</DialogTitle>
-                  <DialogDescription>
-                    Drempels voor kleurcodering in de uitgavenkaarten
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 text-sm">
-                  <div>
-                    <h4 className="font-semibold mb-1">Total/Annual Expenses (vs. Rent)</h4>
-                    <ul className="space-y-1">
-                      <li className="text-green-600">Groen: ≤ 30% van rent</li>
-                      <li className="text-blue-600">Blauw: ≤ 40% van rent</li>
-                      <li className="text-yellow-600">Geel: ≤ 50% van rent</li>
-                      <li className="text-red-600">Rood: &gt; 50% van rent</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Expense Ratio (vs. Rent)</h4>
-                    <ul className="space-y-1">
-                      <li className="text-green-600">Groen: ≤ 30%</li>
-                      <li className="text-yellow-600">Geel: ≤ 40%</li>
-                      <li className="text-red-600">Rood: &gt; 40%</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Net Income</h4>
-                    <ul className="space-y-1">
-                      <li className="text-green-600">Groen: ≥ AED 1,000</li>
-                      <li className="text-blue-600">Blauw: ≥ AED 500</li>
-                      <li className="text-yellow-600">Geel: ≥ AED 0</li>
-                      <li className="text-red-600">Rood: &lt; AED 0</li>
-                    </ul>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Pie Chart */}
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsPieChart>
-                <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value), '']}
-                  contentStyle={{ 
-                    backgroundColor: '#1F2937', 
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#F3F4F6'
-                  }}
-                />
-                <RechartsPieChart dataKey="value">
-                  {expenseData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </RechartsPieChart>
-              </RechartsPieChart>
-            </ResponsiveContainer>
-          </div>
-          
-          {/* Detailed Breakdown */}
-          <div className="space-y-3">
-            {expenseData.map((item, index) => {
-              const totalExpenses = expenseData.reduce((sum, exp) => sum + exp.value, 0);
-              const percentage = (item.value / totalExpenses) * 100;
-              
-              return (
-                <div key={index} className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-1">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-4 h-4 rounded-full mr-3 shadow-sm" 
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">{item.name}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-lg" style={{ color: item.color }}>{formatCurrency(item.value)}</div>
-                      <div className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</div>
-                    </div>
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                    <div 
-                      className="h-full transition-all duration-300 ease-out shadow-sm"
-                      style={{ 
-                        width: `${percentage}%`,
-                        backgroundColor: item.color
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          {(() => {
-            const monthlyTotal = expenseData.reduce((sum, item) => sum + item.value, 0);
-            const ratio = (monthlyTotal / effectiveRent) * 100;
-            const cardColor = ratio <= 30 ? 'bg-green-50 border-green-200' : ratio <= 40 ? 'bg-blue-50 border-blue-200' : ratio <= 50 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200';
-            const textColor = ratio <= 30 ? 'text-green-700' : ratio <= 40 ? 'text-blue-700' : ratio <= 50 ? 'text-yellow-700' : 'text-red-700';
-            const subText = ratio <= 30 ? 'text-green-600' : ratio <= 40 ? 'text-blue-600' : ratio <= 50 ? 'text-yellow-600' : 'text-red-600';
-            return (
-              <div className={`p-4 ${cardColor} dark:bg-transparent dark:border-opacity-30 rounded-lg border text-center shadow-sm hover:shadow-md transition-shadow`}>
-                <div className={`text-xs ${subText} mb-1 font-medium`}>Total Expenses</div>
-                <div className={`font-bold text-lg ${textColor}`}>
-                  {formatCurrency(monthlyTotal)}
-                </div>
-                <div className={`text-xs ${subText}`}>per month</div>
-              </div>
-            );
-          })()}
-          
-          {(() => {
-            const ratio = (expenseData.reduce((sum, item) => sum + item.value, 0) / effectiveRent) * 100;
-            const cardColor = ratio <= 30 ? 'bg-green-50 border-green-200' : ratio <= 40 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200';
-            const textColor = ratio <= 30 ? 'text-green-700' : ratio <= 40 ? 'text-yellow-700' : 'text-red-700';
-            const subText = ratio <= 30 ? 'text-green-600' : ratio <= 40 ? 'text-yellow-600' : 'text-red-600';
-            return (
-              <div className={`p-4 ${cardColor} dark:bg-transparent dark:border-opacity-30 rounded-lg border text-center shadow-sm hover:shadow-md transition-shadow`}>
-                <div className={`text-xs ${subText} mb-1 font-medium`}>vs. Rent</div>
-                <div className={`font-bold text-lg ${textColor}`}>
-                  {ratio.toFixed(1)}%
-                </div>
-                <div className={`text-xs ${subText}`}>expense ratio</div>
-              </div>
-            );
-          })()}
-          
-          {(() => {
-            const monthlyTotal = expenseData.reduce((sum, item) => sum + item.value, 0);
-            const ratio = (monthlyTotal / effectiveRent) * 100;
-            const cardColor = ratio <= 30 ? 'bg-green-50 border-green-200' : ratio <= 40 ? 'bg-blue-50 border-blue-200' : ratio <= 50 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200';
-            const textColor = ratio <= 30 ? 'text-green-700' : ratio <= 40 ? 'text-blue-700' : ratio <= 50 ? 'text-yellow-700' : 'text-red-700';
-            const subText = ratio <= 30 ? 'text-green-600' : ratio <= 40 ? 'text-blue-600' : ratio <= 50 ? 'text-yellow-600' : 'text-red-600';
-            return (
-              <div className={`p-4 ${cardColor} dark:bg-transparent dark:border-opacity-30 rounded-lg border text-center shadow-sm hover:shadow-md transition-shadow`}>
-                <div className={`text-xs ${subText} mb-1 font-medium`}>Annual Expenses</div>
-                <div className={`font-bold text-lg ${textColor}`}>
-                  {formatCurrency(monthlyTotal * 12)}
-                </div>
-                <div className={`text-xs ${subText}`}>per year</div>
-              </div>
-            );
-          })()}
-          
-          <div className={`p-4 rounded-lg border text-center shadow-sm hover:shadow-md transition-shadow ${
-            monthlyCashFlow >= 1000 ? 'bg-green-50 border-green-200' :
-            monthlyCashFlow >= 500 ? 'bg-blue-50 border-blue-200' :
-            monthlyCashFlow >= 0 ? 'bg-yellow-50 border-yellow-200' :
-            'bg-red-50 border-red-200'
-          }`}>
-            <div className={`text-xs mb-1 font-medium ${
-              monthlyCashFlow >= 1000 ? 'text-green-600' :
-              monthlyCashFlow >= 500 ? 'text-blue-600' :
-              monthlyCashFlow >= 0 ? 'text-yellow-600' :
-              'text-red-600'
-            }`}>Net Income</div>
-            <div className={`font-bold text-lg ${
-              monthlyCashFlow >= 1000 ? 'text-green-700' :
-              monthlyCashFlow >= 500 ? 'text-blue-700' :
-              monthlyCashFlow >= 0 ? 'text-yellow-700' :
-              'text-red-700'
-            }`}>
-              {formatCurrency(effectiveRent - expenseData.reduce((sum, item) => sum + item.value, 0))}
-            </div>
-            <div className={`text-xs ${
-              monthlyCashFlow >= 1000 ? 'text-green-600' :
-              monthlyCashFlow >= 500 ? 'text-blue-600' :
-              monthlyCashFlow >= 0 ? 'text-yellow-600' :
-              'text-red-600'
-            }`}>after expenses</div>
-          </div>
-        </div>
-      </div>
-      )}
+      {/* Monthly Expense Breakdown removed per request (consolidated into overview) */}
+      
 
       {/* Investment Score (moved below Rental Price Recommendation) */}
       {false && (
@@ -1695,8 +1681,8 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
             <div className="text-sm opacity-90">Investment Score</div>
           </div>
           <div className="text-center">
-            <Badge className={`${riskLevel === 'Low' ? 'bg-success' : riskLevel === 'Medium' ? 'bg-warning' : 'bg-danger'} text-white`}>
-              {riskLevel} Risk
+            <Badge className={`bg-warning text-white`}>
+              Medium Risk
             </Badge>
             <div className="text-sm opacity-90 mt-1">Risk Level</div>
           </div>
@@ -2109,18 +2095,27 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
           <div className="text-center">
             <div className="text-4xl font-bold mb-1">{investmentScore}/10</div>
             <div className="text-sm opacity-90">Investment Score</div>
+            {(propertyData.name || propertyData.area) && (
+              <div className="text-xs opacity-80 mt-1">
+                {propertyData.name}
+                {propertyData.area ? ` — ${propertyData.area}` : ''}
+              </div>
+            )}
           </div>
           <div className="text-center">
-            <Badge className={`${riskLevel === 'Low' ? 'bg-success' : riskLevel === 'Medium' ? 'bg-warning' : 'bg-danger'} text-white`}>
-              {riskLevel} Risk
+            <Badge className={`${riskRating.level === 'Low' ? 'bg-success' : riskRating.level === 'Medium' ? 'bg-warning' : 'bg-danger'} text-white`}>
+              {riskRating.emoji} {riskRating.level} Risk
             </Badge>
-            <div className="text-sm opacity-90 mt-1">Risk Level</div>
           </div>
         </div>
-        <div className="text-center mb-4">
-          <div className="text-lg font-semibold">
-            {investmentScore >= 8 ? '✅ Strong Buy' : investmentScore >= 6 ? '🔄 Consider' : '❌ Pass'}
-          </div>
+
+        {/* Subscore summary chips */}
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
+          {scoreDetails.map((s, idx) => (
+            <span key={idx} className="px-2 py-1 rounded-full text-[11px] bg-white/15 border border-white/30">
+              {s.category}: <span className="font-semibold">{s.points}/{s.maxPoints}</span>
+            </span>
+          ))}
         </div>
 
         {/* Detailed Score Breakdown */}
@@ -2153,6 +2148,82 @@ export default function InvestmentDashboard({ propertyData }: InvestmentDashboar
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Non-prescriptive explanation trigger */}
+        <div className="mt-4 flex justify-center">
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="text-xs px-2 py-1 rounded-md border border-white/60 text-white/90 hover:bg-white/10">Score explanation</button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>How the score is constructed</DialogTitle>
+                <DialogDescription>Uitleg per categorie; indicatief, geen advies.</DialogDescription>
+              </DialogHeader>
+              <div className="text-sm space-y-3">
+                <div className="p-3 rounded-md border bg-muted/30">
+                  <div className="font-medium mb-1">Weging (indicatief)</div>
+                  <ul className="list-disc ml-5 space-y-1">
+                    <li>Cash Flow: 40%</li>
+                    <li>Yield & Pricing alignment (incl. rent-gap ±10% band): 30%</li>
+                    <li>Risicoparameters (DSCR, yield spread, LTV, expense, rent-gap): informatief in badge</li>
+                  </ul>
+                </div>
+                <div className="p-3 rounded-md border bg-muted/30">
+                  <div className="font-medium mb-1">Actuele waarden</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                    <div className="flex justify-between"><span>DSCR</span><span>{Number.isFinite(dscr) ? dscr.toFixed(2) : '—'}</span></div>
+                    <div className="flex justify-between"><span>Yield spread</span><span>{Number.isFinite(capRate) ? (capRate - interestRateSafe).toFixed(1) + '%' : '—'}</span></div>
+                    <div className="flex justify-between"><span>LTV</span><span>{fmtPct1(ltvPct)}</span></div>
+                    <div className="flex justify-between"><span>Expense ratio</span><span>{fmtPct1(expenseRatioPct)}</span></div>
+                    <div className="flex justify-between"><span>Current rent</span><span>{formatCurrency(monthlyRentSafe)}</span></div>
+                    <div className="flex justify-between"><span>Recommended rent</span><span>{formatCurrency(suggestedRentalPrice.monthlyRent)}</span></div>
+                    <div className="flex justify-between"><span>Rent gap</span><span>{monthlyRentSafe > 0 ? (((suggestedRentalPrice.monthlyRent - monthlyRentSafe) / monthlyRentSafe) * 100).toFixed(1) + '%' : '—'}</span></div>
+                  </div>
+                </div>
+                {scoreDetails.map((s, idx) => (
+                  <div key={idx} className="p-3 rounded-md border bg-muted/30">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="font-medium">{s.category}</div>
+                      <div className="text-xs">{s.points}/{s.maxPoints} pts</div>
+                    </div>
+                    <ul className="list-disc ml-5 space-y-1">
+                      {s.details.map((d, i) => (
+                        <li key={i}>{d}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <div className="p-3 rounded-md border bg-blue-50 text-blue-800">
+                  Overall: <span className="font-semibold">{investmentScore}/10</span>. Samenvattende indicator op basis van cashflow (40%), yield & pricing alignment (30%) en overige factoren. Gebruik als referentiepunt.
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Suggested improvements */}
+        <div className="mt-3 text-left">
+          <h4 className="font-semibold text-white/90 mb-2 text-sm">Actions to improve score</h4>
+          <div className="grid grid-cols-1 gap-2">
+            {monthlyCashFlow < 0 && (
+              <div className="text-xs bg-red-500/15 border border-red-400/40 text-red-100 rounded p-2">❌ Cash flow negatief — overweeg huur te verhogen richting aanbeveling of herfinanciering.</div>
+            )}
+            {(() => {
+              const rentGap = monthlyRentSafe > 0 ? ((suggestedRentalPrice.monthlyRent - monthlyRentSafe) / monthlyRentSafe) * 100 : 0;
+              if (rentGap >= 10) {
+                return <div className="text-xs bg-amber-500/15 border border-amber-400/40 text-amber-100 rounded p-2">⚠️ Huidige huur ligt ≥ 10% onder aanbeveling — overweeg +{Math.round(Math.min(rentGap, 20))}% verhoging.</div>;
+              }
+              return null;
+            })()}
+            {Number.isFinite(dscr) && dscr < 1.25 && (
+              <div className="text-xs bg-amber-500/15 border border-amber-400/40 text-amber-100 rounded p-2">⚠️ DSCR laag — verlaag lening/prijs, of verhoog huur om {'>'} 1.25 te bereiken.</div>
+            )}
+            {Number.isFinite(expenseRatioPct) && expenseRatioPct > 35 && (
+              <div className="text-xs bg-amber-500/15 border border-amber-400/40 text-amber-100 rounded p-2">⚠️ Expense ratio {'>'} 35% — optimaliseer beheer, onderhoud of overige kosten.</div>
+            )}
           </div>
         </div>
       </div>

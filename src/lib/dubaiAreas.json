@@ -1,0 +1,17 @@
+[
+  { "name": "Dubai Marina", "group": "New Dubai" },
+  { "name": "Downtown Dubai", "group": "Central" },
+  { "name": "Jumeirah Village Circle", "group": "New Dubai" },
+  { "name": "Business Bay", "group": "Central" },
+  { "name": "Dubai Hills Estate", "group": "New Dubai" },
+  { "name": "Arabian Ranches", "group": "New Dubai" },
+  { "name": "Palm Jumeirah", "group": "Coastal" },
+  { "name": "Dubai Investment Park", "group": "South" },
+  { "name": "Jumeirah Beach Residence", "group": "Coastal" },
+  { "name": "Al Barsha", "group": "New Dubai" },
+  { "name": "Dubai South", "group": "South" },
+  { "name": "Dubai Creek Harbour", "group": "Creek" },
+  { "name": "Mohammed Bin Rashid City", "group": "Central" },
+  { "name": "Dubai Silicon Oasis", "group": "East" }
+]
+
