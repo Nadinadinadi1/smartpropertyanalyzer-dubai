@@ -474,6 +474,81 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
   // ROI calculation for selected years
   const totalROI = ((Math.pow(1 + metrics.irr / 100, roiYears) - 1) * 100);
 
+  // ---- Exit Strategy helpers ----
+  const monthlyRate = propertyData.interestRate / 100 / 12;
+  const pow = (x: number, y: number) => Math.pow(x, y);
+  const remainingLoanAfterYears = (years: number): number => {
+    const n = Math.max(0, Math.floor(years * 12));
+    if (metrics.loanAmount <= 0) return 0;
+    if (monthlyRate === 0) return Math.max(0, metrics.loanAmount - metrics.monthlyPayment * n);
+    const a = pow(1 + monthlyRate, n);
+    return Math.max(0, metrics.loanAmount * a - metrics.monthlyPayment * ((a - 1) / monthlyRate));
+  };
+
+  const annualCashFlowAtYear = (yearIndexZeroBased: number) => {
+    // Approximate growth by rentGrowth; keep expenses constant for MVP
+    return metrics.monthlyCashFlow * 12 * pow(1 + propertyData.rentGrowth / 100, yearIndexZeroBased);
+  };
+
+  const cumulativeCashFlowUntil = (years: number) => {
+    let total = 0;
+    for (let y = 0; y < years; y++) total += annualCashFlowAtYear(y);
+    return total;
+  };
+
+  const salePriceAt = (years: number) => propertyData.price * pow(1 + propertyData.appreciationRate / 100, years);
+  const sellingCostPct = Math.max(0, propertyData.sellingCosts) / 100;
+
+  const computeIRR = (years: number): number => {
+    const n = years;
+    const initial = -metrics.totalInvestment;
+    const flows: number[] = [initial];
+    for (let y = 1; y < n; y++) flows.push(annualCashFlowAtYear(y - 1));
+    const remain = remainingLoanAfterYears(n);
+    const sale = salePriceAt(n) * (1 - sellingCostPct) - remain;
+    flows.push(annualCashFlowAtYear(n - 1) + sale);
+
+    // Newton-Raphson on annual basis
+    let r = 0.12;
+    for (let i = 0; i < 100; i++) {
+      let npv = 0;
+      let d = 0;
+      for (let t = 0; t < flows.length; t++) {
+        const df = pow(1 + r, t);
+        npv += flows[t] / df;
+        if (t > 0) d += -t * flows[t] / pow(1 + r, t + 1);
+      }
+      if (Math.abs(npv) < 1) break;
+      if (Math.abs(d) < 1e-6) break;
+      r = r - npv / d;
+      if (r < -0.99) { r = -0.99; break; }
+    }
+    return r * 100;
+  };
+
+  const exitYears = roiYears; // reuse selector
+  const exitSalePrice = salePriceAt(exitYears);
+  const exitRemainingLoan = remainingLoanAfterYears(exitYears);
+  const exitSellingCosts = exitSalePrice * sellingCostPct;
+  const exitNetProceeds = exitSalePrice - exitSellingCosts - exitRemainingLoan;
+  const exitCumCashFlow = cumulativeCashFlowUntil(exitYears);
+  const exitTotalProfit = exitNetProceeds + exitCumCashFlow - metrics.totalInvestment;
+  const exitEquityMultiple = safeDiv(exitNetProceeds + exitCumCashFlow, metrics.totalInvestment);
+  const exitIrr = computeIRR(exitYears);
+  const breakEvenSalePrice = safeDiv(metrics.totalInvestment - exitCumCashFlow + exitRemainingLoan, 1 - sellingCostPct);
+
+  const horizons = [3, 5, 7] as const;
+  const exitRows = horizons.map((h) => {
+    const sp = salePriceAt(h);
+    const rl = remainingLoanAfterYears(h);
+    const sc = sp * sellingCostPct;
+    const np = sp - sc - rl;
+    const cc = cumulativeCashFlowUntil(h);
+    const irr = computeIRR(h);
+    const em = safeDiv(np + cc, metrics.totalInvestment);
+    return { h, sale: sp, costs: sc, remaining: rl, net: np, irr, em };
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 pb-32 pt-4">
       {/* Header */}
@@ -1143,15 +1218,134 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
               </div>
             </div>
             
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="font-medium text-green-600">Action Items:</span>
+                <CheckCircle className="h-5 w-5 text-orange-600" />
+                <span className="font-medium text-orange-700">Action Items:</span>
               </div>
-              <div className="mt-2 text-sm text-green-700">
+              <div className="mt-2 text-sm text-orange-700">
                 Current rent is {(propertyData.monthlyRent + propertyData.additionalIncome) > recommendedGrossRent ? 'above' : 'below'} recommended — {(propertyData.monthlyRent + propertyData.additionalIncome) > recommendedGrossRent ? 'favorable' : 'consider adjustment'} position
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Exit Strategy */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🚪</span>
+              <CardTitle>Exit Strategy</CardTitle>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-gray-400" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm">
+                    <p>Exit scenario for the selected period ({roiYears} years): net proceeds, IRR, and equity multiple based on your current assumptions.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <div className="ml-auto flex items-center gap-2">
+                <span className="text-xs text-gray-500">Period</span>
+                <select 
+                  className="text-xs border rounded px-2 py-1 bg-white"
+                  value={roiYears}
+                  onChange={(e) => setRoiYears(parseInt(e.target.value))}
+                >
+                  <option value={3}>3Y</option>
+                  <option value={5}>5Y</option>
+                  <option value={7}>7Y</option>
+                </select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
+                <div className="text-xs text-green-700">Net Proceeds at Exit</div>
+                <div className="text-2xl font-bold text-green-700">{formatAED(exitNetProceeds)}</div>
+              </div>
+              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="text-xs text-blue-700">IRR ({roiYears} Years)</div>
+                <div className="text-2xl font-bold text-blue-700">{exitIrr.toFixed(1)}%</div>
+              </div>
+              <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
+                <div className="text-xs text-purple-700">Equity Multiple</div>
+                <div className="text-2xl font-bold text-purple-700">{exitEquityMultiple.toFixed(2)}x</div>
+              </div>
+            </div>
+
+            {/* Distribution bar */}
+            <div className="mt-4">
+              <div className="text-xs text-gray-600 mb-1">Distribution at Exit</div>
+              <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden flex">
+                {(() => {
+                  const total = Math.max(1, exitSalePrice);
+                  const pCosts = (exitSellingCosts / total) * 100;
+                  const pLoan = (exitRemainingLoan / total) * 100;
+                  const pNet = Math.max(0, 100 - pCosts - pLoan);
+                  return (
+                    <>
+                      <div style={{ width: `${pCosts}%` }} className="bg-amber-400" />
+                      <div style={{ width: `${pLoan}%` }} className="bg-blue-400" />
+                      <div style={{ width: `${pNet}%` }} className="bg-green-500" />
+                    </>
+                  );
+                })()}
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Costs</span>
+                <span>Remaining Loan</span>
+                <span>Net Proceeds</span>
+              </div>
+            </div>
+
+            {/* 3/5/7 comparison */}
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-600">
+                    <th className="py-2 font-medium">Years</th>
+                    <th className="py-2 font-medium">Sale price</th>
+                    <th className="py-2 font-medium">Net proceeds</th>
+                    <th className="py-2 font-medium">IRR</th>
+                    <th className="py-2 font-medium">Equity multiple</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {exitRows.map(r => (
+                    <tr key={r.h} className="border-t">
+                      <td className="py-2">{r.h} Years</td>
+                      <td className="py-2">{formatAED(r.sale)}</td>
+                      <td className="py-2">{formatAED(r.net)}</td>
+                      <td className="py-2">{r.irr.toFixed(1)}%</td>
+                      <td className="py-2">{r.em.toFixed(2)}x</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="mt-4">Details</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Exit Details ({roiYears} Years)</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span>Sale price</span><span>{formatAED(exitSalePrice)}</span></div>
+                  <div className="flex justify-between"><span>Selling costs</span><span>{formatAED(exitSellingCosts)}</span></div>
+                  <div className="flex justify-between"><span>Remaining loan</span><span>{formatAED(exitRemainingLoan)}</span></div>
+                  <div className="flex justify-between"><span>Net proceeds</span><span className="font-semibold">{formatAED(exitNetProceeds)}</span></div>
+                  <div className="flex justify-between"><span>Cumulative cash flow</span><span>{formatAED(exitCumCashFlow)}</span></div>
+                  <div className="flex justify-between"><span>Total profit vs cash invested</span><span className="font-semibold">{formatAED(exitTotalProfit)}</span></div>
+                  <div className="flex justify-between"><span>Break-even sale price</span><span>{formatAED(breakEvenSalePrice)}</span></div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardContent>
         </Card>
 
@@ -1371,14 +1565,14 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
             </div>
 
             {/* Recommendations Section */}
-            <div className="bg-white/10 rounded-lg p-6">
+            <div className="bg-yellow-400/20 ring-1 ring-yellow-300/40 rounded-lg p-6">
               <h3 className="font-semibold mb-4 text-xl flex items-center gap-2">
                 <span className="text-lg">💡</span>
                 Recommendations to Improve Your Score
               </h3>
               <div className="space-y-3">
                 {metrics.monthlyCashFlow <= 0 && (
-                  <div className="flex items-start gap-3 bg-white/5 p-3 rounded-lg">
+                  <div className="flex items-start gap-3 bg-yellow-400/10 p-3 rounded-lg">
                     <TrendingUp className="h-5 w-5 text-green-300 mt-0.5" />
                     <div>
                       <p className="font-medium">Improve Cash Flow</p>
@@ -1387,7 +1581,7 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   </div>
                 )}
                 {metrics.dscr < 1.5 && (
-                  <div className="flex items-start gap-3 bg-white/5 p-3 rounded-lg">
+                  <div className="flex items-start gap-3 bg-yellow-400/10 p-3 rounded-lg">
                     <ShieldCheck className="h-5 w-5 text-yellow-300 mt-0.5" />
                     <div>
                       <p className="font-medium">Strengthen Debt Coverage</p>
@@ -1396,7 +1590,7 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   </div>
                 )}
                 {metrics.monthlyExpenseRatio > 30 && (
-                  <div className="flex items-start gap-3 bg-white/5 p-3 rounded-lg">
+                  <div className="flex items-start gap-3 bg-yellow-400/10 p-3 rounded-lg">
                     <TrendingDown className="h-5 w-5 text-red-300 mt-0.5" />
                     <div>
                       <p className="font-medium">Reduce Expense Ratio</p>
@@ -1405,7 +1599,7 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   </div>
                 )}
                 {propertyData.appreciationRate <= 3 && (
-                  <div className="flex items-start gap-3 bg-white/5 p-3 rounded-lg">
+                  <div className="flex items-start gap-3 bg-yellow-400/10 p-3 rounded-lg">
                     <Home className="h-5 w-5 text-blue-300 mt-0.5" />
                     <div>
                       <p className="font-medium">Consider Growth Areas</p>
