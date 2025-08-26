@@ -13,10 +13,15 @@ import { AppHeader } from '@/components/AppHeader';
 interface PropertyData {
   propertyStatus: 'ready' | 'off-plan';
   name: string;
+  sizeSqft: number;
   price: number;
   priceInputMethod: 'slider' | 'manual';
   propertyType: string;
   area: string;
+  handoverBy?: string | null;
+  preHandoverPercent: number;
+  bedrooms: number | 'studio' | '8+';
+  bathrooms: number | '6+';
   downPayment: number;
   agentFeePercent: number;
   loanTerm: number;
@@ -100,6 +105,23 @@ const Index = () => {
     // Scroll to top when analysis results are shown
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Listen for explicit requests to jump to analyze step 1
+  useEffect(() => {
+    const handleGoFirstStep = () => {
+      setActiveTab('analyze');
+      // allow the analyzer to render and then scroll to first field if present
+      setTimeout(() => {
+        const el = document.getElementById('property-name');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          (el as HTMLInputElement).focus();
+        }
+      }, 60);
+    };
+    window.addEventListener('goToAnalyzeFirstStep', handleGoFirstStep as EventListener);
+    return () => window.removeEventListener('goToAnalyzeFirstStep', handleGoFirstStep as EventListener);
+  }, []);
 
   const handleAnalysisComplete = (score: number, details: any[], projections: any[], irrValue: number) => {
     console.log('=== INDEX RECEIVED ANALYSIS DEBUG ===');
