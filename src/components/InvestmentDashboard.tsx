@@ -77,6 +77,7 @@ interface InvestmentDashboardProps {
 interface InvestmentMetrics {
   investmentScore: number;
   riskLevel: string;
+  scoreDetails: ScoreCategory[];
   monthlyCashFlow: number;
   annualROI: number;
   cashOnCashReturn: number;
@@ -95,6 +96,27 @@ interface InvestmentMetrics {
   dscr: number;
   vacancyRate: number;
 }
+
+// Detailed deal score types
+type ReasonType =
+  | 'CASHFLOW_POSITIVE'
+  | 'COC_OVER_6'
+  | 'NET_OVER_5'
+  | 'NET_OVER_7'
+  | 'GROSS_OVER_8'
+  | 'MER_UNDER_30'
+  | 'MER_UNDER_50'
+  | 'APP_OVER_3';
+
+type ScoreReason = { type: ReasonType; met: boolean; points: number };
+
+type ScoreCategory = {
+  key: 'cashFlow' | 'yield' | 'risk' | 'growth';
+  title: string;
+  earned: number;
+  max: number;
+  reasons: ScoreReason[];
+};
 
 const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData }) => {
   // Calculate all investment metrics
@@ -193,39 +215,58 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
     const irr = calculateIRR();
     
     // Investment Score Calculation
-    const calculateInvestmentScore = (): { score: number; riskLevel: string } => {
-      let score = 0;
-      
+    const calculateInvestmentScore = (): { score: number; riskLevel: string; details: ScoreCategory[] } => {
       // Cash Flow (4 points max)
-      if (monthlyCashFlow > 0) score += 2;
-      if (cashOnCashReturn > 6) score += 2;
+      const cashFlowReasons: ScoreReason[] = [
+        { type: 'CASHFLOW_POSITIVE', met: monthlyCashFlow > 0, points: monthlyCashFlow > 0 ? 2 : 0 },
+        { type: 'COC_OVER_6', met: cashOnCashReturn > 6, points: cashOnCashReturn > 6 ? 2 : 0 },
+      ];
+      const cashFlowEarned = cashFlowReasons.reduce((s, r) => s + r.points, 0);
       
       // Yield (3 points max)
-      if (netYield > 5) score += 1;
-      if (netYield > 7) score += 1;
-      if (grossYield > 8) score += 1;
+      const yieldReasons: ScoreReason[] = [
+        { type: 'NET_OVER_5', met: netYield > 5, points: netYield > 5 ? 1 : 0 },
+        { type: 'NET_OVER_7', met: netYield > 7, points: netYield > 7 ? 1 : 0 },
+        { type: 'GROSS_OVER_8', met: grossYield > 8, points: grossYield > 8 ? 1 : 0 },
+      ];
+      const yieldEarned = yieldReasons.reduce((s, r) => s + r.points, 0);
       
       // Risk (2 points max)
-      if (monthlyExpenseRatio < 30) score += 2;
-      else if (monthlyExpenseRatio < 50) score += 1;
+      const riskReasons: ScoreReason[] = [
+        { type: 'MER_UNDER_30', met: monthlyExpenseRatio < 30, points: monthlyExpenseRatio < 30 ? 2 : 0 },
+        { type: 'MER_UNDER_50', met: monthlyExpenseRatio >= 30 && monthlyExpenseRatio < 50, points: monthlyExpenseRatio >= 30 && monthlyExpenseRatio < 50 ? 1 : 0 },
+      ];
+      const riskEarned = riskReasons.reduce((s, r) => s + r.points, 0);
       
       // Growth (1 point max)
-      if (propertyData.appreciationRate > 3) score += 1;
-      
+      const growthReasons: ScoreReason[] = [
+        { type: 'APP_OVER_3', met: propertyData.appreciationRate > 3, points: propertyData.appreciationRate > 3 ? 1 : 0 },
+      ];
+      const growthEarned = growthReasons.reduce((s, r) => s + r.points, 0);
+
+      const details: ScoreCategory[] = [
+        { key: 'cashFlow', title: 'Cash Flow', earned: cashFlowEarned, max: 4, reasons: cashFlowReasons },
+        { key: 'yield', title: 'Yield', earned: yieldEarned, max: 3, reasons: yieldReasons },
+        { key: 'risk', title: 'Risk', earned: riskEarned, max: 2, reasons: riskReasons },
+        { key: 'growth', title: 'Growth', earned: growthEarned, max: 1, reasons: growthReasons },
+      ];
+
+      const score = details.reduce((s, c) => s + c.earned, 0);
       const finalScore = Math.round((score / 10) * 10);
       
       let riskLevel = "High Risk";
       if (finalScore >= 8) riskLevel = "Low Risk";
       else if (finalScore >= 6) riskLevel = "Medium Risk";
       
-      return { score: finalScore, riskLevel };
+      return { score: finalScore, riskLevel, details };
     };
     
-    const { score: investmentScore, riskLevel } = calculateInvestmentScore();
+    const { score: investmentScore, riskLevel, details: scoreDetails } = calculateInvestmentScore();
     
     return {
       investmentScore,
       riskLevel,
+      scoreDetails,
       monthlyCashFlow,
       annualROI,
       cashOnCashReturn,
@@ -246,16 +287,138 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
     };
   };
   
+  // Helpers: formatting and dynamic color coding
+  const formatAED = (v: number) => `AED ${Math.round(Number.isFinite(v) ? v : 0).toLocaleString()}`;
+  const formatCompact = (v: number) => new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(Math.round(v));
+  const safeDiv = (num: number, den: number) => (den && Number.isFinite(den) && Math.abs(den) > 0 ? num / den : 0);
+
+  // Simple Dubai benchmarks (default ranges). In a next iteration, make these area/type-specific.
+  const dubaiBenchmarks = {
+    monthlyProfit: 'AED 500–1,000+ / mo',
+    cashReturn: '5–8% / yr',
+    irr: '10–15% / yr',
+    annualRoi: '8–12% (year 1)',
+    grossYield: '7–10% / yr',
+    netYield: '5–7% / yr',
+  } as const;
+
+  // Map numeric 0–10 score to a letter grade and plain-language label
+  const getInvestmentGrade = (score: number): { grade: string; label: string } => {
+    if (score >= 9) return { grade: 'A', label: 'Excellent deal' };
+    if (score >= 8) return { grade: 'A−', label: 'Very strong deal' };
+    if (score >= 7) return { grade: 'B+', label: 'Good deal' };
+    if (score >= 6) return { grade: 'B', label: 'Solid deal' };
+    if (score >= 5) return { grade: 'C+', label: 'Average deal with improvement points' };
+    if (score >= 4) return { grade: 'C', label: 'Below average; needs work' };
+    return { grade: 'D', label: 'High risk; proceed with caution' };
+  };
+
+  // New Investment Grade system (0–100) with weighted categories
+  const INVESTMENT_GRADES = {
+    'A+': { label: 'Excellent Investment', color: '#10b981', risk: 'Very Low' },
+    'A':  { label: 'Very Good Investment', color: '#059669', risk: 'Low' },
+    'A-': { label: 'Good Investment',      color: '#22c55e', risk: 'Low' },
+    'B+': { label: 'Above‑Average Deal',   color: '#84cc16', risk: 'Low‑Medium' },
+    'B':  { label: 'Solid Investment',     color: '#a3a3a3', risk: 'Medium' },
+    'B-': { label: 'Average Deal',         color: '#f59e0b', risk: 'Medium' },
+    'C+': { label: 'Below Average',        color: '#f97316', risk: 'Medium‑High' },
+    'C':  { label: 'Weak Investment',      color: '#ef4444', risk: 'High' },
+    'C-': { label: 'Risky',                color: '#dc2626', risk: 'High' },
+    'D':  { label: 'Very Risky',           color: '#b91c1c', risk: 'Very High' },
+    'F':  { label: 'Avoid this Deal',      color: '#7f1d1d', risk: 'Extreme' },
+  } as const;
+
+  const getGradeLetter100 = (score: number): keyof typeof INVESTMENT_GRADES => {
+    if (score >= 90) return 'A+';
+    if (score >= 85) return 'A';
+    if (score >= 80) return 'A-';
+    if (score >= 75) return 'B+';
+    if (score >= 70) return 'B';
+    if (score >= 65) return 'B-';
+    if (score >= 60) return 'C+';
+    if (score >= 55) return 'C';
+    if (score >= 50) return 'C-';
+    if (score >= 40) return 'D';
+    return 'F';
+  };
+
+  const getRecommendationText = (letter: keyof typeof INVESTMENT_GRADES): string => {
+    const map: Record<string, string> = {
+      'A+': 'Excellent deal — proceed with confidence.',
+      'A':  'Very strong investment — highly recommended.',
+      'A-': 'Good investment opportunity — proceed.',
+      'B+': 'Above average deal — consider proceeding.',
+      'B':  'Solid investment — review terms carefully.',
+      'B-': 'Average deal — negotiate improvements.',
+      'C+': 'Below average — significant improvements needed.',
+      'C':  'Weak investment — major concerns to address.',
+      'C-': 'High risk — only for experienced investors.',
+      'D':  'Very risky — strongly consider alternatives.',
+      'F':  'Avoid — fundamental issues present.',
+    };
+    return map[letter] || 'Review required.';
+  };
+
+  type GradeBreakdownItem = { name: string; description: string; score: number; maxScore: number; rating: string };
+
+  const getAgentNotes = (m: InvestmentMetrics): string => {
+    const notes: string[] = [];
+    if (m.monthlyCashFlow <= 0) notes.push('Improve monthly earnings: increase rent or lower fees');
+    if (m.monthlyExpenseRatio > 70) notes.push('High cost pressure: reduce management/maintenance/insurance');
+    if (m.netYield < 5) notes.push('Low net yield: target higher rent or price negotiation');
+    if (notes.length === 0) notes.push('Strong fundamentals: consider proceeding');
+    return notes.slice(0, 2).join(' • ');
+  };
+
+  const calculateInvestmentGradeReport = (m: InvestmentMetrics): { totalScore: number; letter: keyof typeof INVESTMENT_GRADES; breakdown: GradeBreakdownItem[] } => {
+    const roi = Math.max(0, m.annualROI);
+    const cashFlow = m.monthlyCashFlow;
+    const netYield = Math.max(0, m.netYield);
+    const expenseRatio = Math.max(0, m.monthlyExpenseRatio);
+    const dscr = Math.max(0, m.dscr);
+
+    // ROI (30)
+    let roiScore = 0;
+    if (roi >= 12) roiScore = 30; else if (roi >= 8) roiScore = 24; else if (roi >= 5) roiScore = 18; else if (roi >= 2) roiScore = 12; else roiScore = 6;
+
+    // Cash Flow (25)
+    let cfScore = 0;
+    if (cashFlow >= 1500) cfScore = 25; else if (cashFlow >= 1000) cfScore = 20; else if (cashFlow >= 500) cfScore = 15; else if (cashFlow >= 100) cfScore = 10; else if (cashFlow >= 0) cfScore = 5; else cfScore = 0;
+
+    // Net Yield (20)
+    let nyScore = 0;
+    if (netYield >= 7) nyScore = 20; else if (netYield >= 5) nyScore = 16; else if (netYield >= 3) nyScore = 12; else if (netYield >= 1) nyScore = 8; else nyScore = 4;
+
+    // Expense Management (15) — lower is better. Use expense ratio (incl. mortgage) already computed
+    let expScore = 0;
+    if (expenseRatio <= 60) expScore = 15; else if (expenseRatio <= 70) expScore = 12; else if (expenseRatio <= 80) expScore = 9; else if (expenseRatio <= 90) expScore = 6; else expScore = 3;
+
+    // Financial Health (10) — DSCR
+    let dscrScore = 0;
+    if (dscr >= 1.4) dscrScore = 10; else if (dscr >= 1.25) dscrScore = 8; else if (dscr >= 1.1) dscrScore = 6; else if (dscr >= 1.0) dscrScore = 4; else dscrScore = 2;
+
+    const totalScore = Math.max(0, Math.min(100, roiScore + cfScore + nyScore + expScore + dscrScore));
+    const letter = getGradeLetter100(totalScore);
+
+    const breakdown: GradeBreakdownItem[] = [
+      { name: 'Return on Investment', description: `${roi.toFixed(1)}% year‑1 ROI`, score: roiScore, maxScore: 30, rating: roi >= 12 ? 'Excellent' : roi >= 8 ? 'Good' : roi >= 5 ? 'Average' : roi >= 2 ? 'Poor' : 'Very poor' },
+      { name: 'Monthly Cash Flow', description: `${formatAED(cashFlow)} per month`, score: cfScore, maxScore: 25, rating: cashFlow >= 1000 ? 'Good' : cashFlow >= 500 ? 'Average' : cashFlow >= 0 ? 'Break‑even' : 'Negative' },
+      { name: 'Rental Yield', description: `${netYield.toFixed(1)}% net yield`, score: nyScore, maxScore: 20, rating: netYield >= 7 ? 'Excellent' : netYield >= 5 ? 'Good' : netYield >= 3 ? 'Average' : 'Poor' },
+      { name: 'Cost Management', description: `${expenseRatio.toFixed(1)}% expense ratio`, score: expScore, maxScore: 15, rating: expenseRatio <= 60 ? 'Excellent' : expenseRatio <= 70 ? 'Good' : expenseRatio <= 80 ? 'Average' : 'High' },
+      { name: 'Financial Health', description: `${dscr.toFixed(2)}× coverage`, score: dscrScore, maxScore: 10, rating: dscr >= 1.25 ? 'Good' : dscr >= 1.1 ? 'Average' : 'Weak' },
+    ];
+
+    return { totalScore, letter, breakdown };
+  };
+  
   const metrics = calculateMetrics();
+  const gradeInfo = getInvestmentGrade(metrics.investmentScore);
   // ROI period selector (years)
   const [roiYears, setRoiYears] = useState<number>(3);
   // Adjustable target net yield (% on price)
   const [targetNetYield, setTargetNetYield] = useState<number>(6);
   
-  // Helpers: formatting and dynamic color coding
-  const formatAED = (v: number) => `AED ${Math.round(Number.isFinite(v) ? v : 0).toLocaleString()}`;
-  const formatCompact = (v: number) => new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(Math.round(v));
-  const safeDiv = (num: number, den: number) => (den && Number.isFinite(den) && Math.abs(den) > 0 ? num / den : 0);
+  // (Removed duplicate: dubaiBenchmarks, getInvestmentGrade)
 
   type MetricKey = 'cashFlow' | 'coc' | 'irr' | 'annualRoi' | 'grossYield' | 'netYield' | 'dscr' | 'expenseRatio' | 'ltv';
   const getMetricColors = (key: MetricKey, value: number) => {
@@ -454,6 +617,38 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
   const recommendedMonthlyNoi = monthlyNoiTarget; // by construction
   const recommendedNetYieldOnPrice = safeDiv(recommendedMonthlyNoi * 12, propertyData.price) * 100;
   
+  // Outlook helpers
+  const breakEvenEffectiveRent = (metrics.monthlyPayment + baseFee + monthlyMaintenance + monthlyInsurance + monthlyOther) / Math.max(0.01, (1 - managementPct));
+  const breakEvenGrossRent = breakEvenEffectiveRent / vacancyFactor;
+  const paybackYears = metrics.monthlyCashFlow > 0 ? (metrics.totalInvestment / (metrics.monthlyCashFlow * 12)) : null;
+
+  const monthlyRateOut = propertyData.interestRate / 100 / 12;
+  const powOut = (x: number, y: number) => Math.pow(x, y);
+  const remainingLoanAfterYearsSimple = (years: number): number => {
+    const n = Math.max(0, Math.floor(years * 12));
+    if (metrics.loanAmount <= 0) return 0;
+    if (monthlyRateOut === 0) return Math.max(0, metrics.loanAmount - metrics.monthlyPayment * n);
+    const a = powOut(1 + monthlyRateOut, n);
+    return Math.max(0, metrics.loanAmount * a - metrics.monthlyPayment * ((a - 1) / monthlyRateOut));
+  };
+  const salePriceAtYears = (years: number) => propertyData.price * powOut(1 + propertyData.appreciationRate / 100, years);
+  const sellingCostPct = Math.max(0, propertyData.sellingCosts) / 100;
+  const annualCashFlowAtYearApprox = (yearIndexZeroBased: number) => metrics.monthlyCashFlow * 12 * powOut(1 + propertyData.rentGrowth / 100, yearIndexZeroBased);
+  const cumulativeCashFlowUntilYears = (years: number) => {
+    let total = 0;
+    for (let y = 0; y < years; y++) total += annualCashFlowAtYearApprox(y);
+    return total;
+  };
+  const previewAt = (years: number) => {
+    const sp = salePriceAtYears(years);
+    const remain = remainingLoanAfterYearsSimple(years);
+    const net = sp * (1 - sellingCostPct) - remain;
+    const cum = cumulativeCashFlowUntilYears(years);
+    const em = safeDiv(net + cum, metrics.totalInvestment);
+    return { years, net, em };
+  };
+  const outlookPreviews = [3, 5, 7].map(previewAt);
+
   // Expense breakdown for pie chart
   
   const expenseBreakdown = [
@@ -473,81 +668,6 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
   
   // ROI calculation for selected years
   const totalROI = ((Math.pow(1 + metrics.irr / 100, roiYears) - 1) * 100);
-
-  // ---- Exit Strategy helpers ----
-  const monthlyRate = propertyData.interestRate / 100 / 12;
-  const pow = (x: number, y: number) => Math.pow(x, y);
-  const remainingLoanAfterYears = (years: number): number => {
-    const n = Math.max(0, Math.floor(years * 12));
-    if (metrics.loanAmount <= 0) return 0;
-    if (monthlyRate === 0) return Math.max(0, metrics.loanAmount - metrics.monthlyPayment * n);
-    const a = pow(1 + monthlyRate, n);
-    return Math.max(0, metrics.loanAmount * a - metrics.monthlyPayment * ((a - 1) / monthlyRate));
-  };
-
-  const annualCashFlowAtYear = (yearIndexZeroBased: number) => {
-    // Approximate growth by rentGrowth; keep expenses constant for MVP
-    return metrics.monthlyCashFlow * 12 * pow(1 + propertyData.rentGrowth / 100, yearIndexZeroBased);
-  };
-
-  const cumulativeCashFlowUntil = (years: number) => {
-    let total = 0;
-    for (let y = 0; y < years; y++) total += annualCashFlowAtYear(y);
-    return total;
-  };
-
-  const salePriceAt = (years: number) => propertyData.price * pow(1 + propertyData.appreciationRate / 100, years);
-  const sellingCostPct = Math.max(0, propertyData.sellingCosts) / 100;
-
-  const computeIRR = (years: number): number => {
-    const n = years;
-    const initial = -metrics.totalInvestment;
-    const flows: number[] = [initial];
-    for (let y = 1; y < n; y++) flows.push(annualCashFlowAtYear(y - 1));
-    const remain = remainingLoanAfterYears(n);
-    const sale = salePriceAt(n) * (1 - sellingCostPct) - remain;
-    flows.push(annualCashFlowAtYear(n - 1) + sale);
-
-    // Newton-Raphson on annual basis
-    let r = 0.12;
-    for (let i = 0; i < 100; i++) {
-      let npv = 0;
-      let d = 0;
-      for (let t = 0; t < flows.length; t++) {
-        const df = pow(1 + r, t);
-        npv += flows[t] / df;
-        if (t > 0) d += -t * flows[t] / pow(1 + r, t + 1);
-      }
-      if (Math.abs(npv) < 1) break;
-      if (Math.abs(d) < 1e-6) break;
-      r = r - npv / d;
-      if (r < -0.99) { r = -0.99; break; }
-    }
-    return r * 100;
-  };
-
-  const exitYears = roiYears; // reuse selector
-  const exitSalePrice = salePriceAt(exitYears);
-  const exitRemainingLoan = remainingLoanAfterYears(exitYears);
-  const exitSellingCosts = exitSalePrice * sellingCostPct;
-  const exitNetProceeds = exitSalePrice - exitSellingCosts - exitRemainingLoan;
-  const exitCumCashFlow = cumulativeCashFlowUntil(exitYears);
-  const exitTotalProfit = exitNetProceeds + exitCumCashFlow - metrics.totalInvestment;
-  const exitEquityMultiple = safeDiv(exitNetProceeds + exitCumCashFlow, metrics.totalInvestment);
-  const exitIrr = computeIRR(exitYears);
-  const breakEvenSalePrice = safeDiv(metrics.totalInvestment - exitCumCashFlow + exitRemainingLoan, 1 - sellingCostPct);
-
-  const horizons = [3, 5, 7] as const;
-  const exitRows = horizons.map((h) => {
-    const sp = salePriceAt(h);
-    const rl = remainingLoanAfterYears(h);
-    const sc = sp * sellingCostPct;
-    const np = sp - sc - rl;
-    const cc = cumulativeCashFlowUntil(h);
-    const irr = computeIRR(h);
-    const em = safeDiv(np + cc, metrics.totalInvestment);
-    return { h, sale: sp, costs: sc, remaining: rl, net: np, irr, em };
-  });
 
   return (
     <div className="min-h-screen bg-gray-50 pb-32 pt-4">
@@ -676,6 +796,11 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   {formatAED(metrics.monthlyCashFlow)}
                 </div>
                 <div className="text-sm text-gray-600">Monthly Cash Flow</div>
+                <div className="mt-1 text-xs text-gray-600">
+                  <span className="font-medium">Health:</span> {getHealthLabel('cashFlow', metrics.monthlyCashFlow)}
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">Benchmark (Dubai):</span> {dubaiBenchmarks.monthlyProfit}
+                </div>
                 {/* Health badge bottom-right */}
                 <div className={`absolute bottom-2 right-2 text-base px-2 py-1 rounded ${getMetricColors('cashFlow', metrics.monthlyCashFlow).text}`}> 
                   {getHealthIcon('cashFlow', metrics.monthlyCashFlow)}
@@ -718,7 +843,12 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                 <div className={`text-2xl font-bold ${getMetricColors('coc', metrics.cashOnCashReturn).text} mb-1`}>
                   {metrics.cashOnCashReturn.toFixed(1)}%
                 </div>
-                <div className="text-sm text-gray-600">Cash-on-Cash Return</div>
+                <div className="text-sm text-gray-600">Cash Return (on Cash Invested)</div>
+                <div className="mt-1 text-xs text-gray-600">
+                  <span className="font-medium">Health:</span> {getHealthLabel('coc', metrics.cashOnCashReturn)}
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">Benchmark (Dubai):</span> {dubaiBenchmarks.cashReturn}
+                </div>
                 <div className={`absolute bottom-2 right-2 text-base px-2 py-1 rounded ${getMetricColors('coc', metrics.cashOnCashReturn).text}`}>
                   {getHealthIcon('coc', metrics.cashOnCashReturn)}
                 </div>
@@ -761,6 +891,11 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   {metrics.irr.toFixed(1)}%
                 </div>
                 <div className="text-sm text-gray-600">IRR (Internal Rate of Return)</div>
+                <div className="mt-1 text-xs text-gray-600">
+                  <span className="font-medium">Health:</span> {getHealthLabel('irr', metrics.irr)}
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">Benchmark (Dubai):</span> {dubaiBenchmarks.irr}
+                </div>
                 <div className={`absolute bottom-2 right-2 text-base px-2 py-1 rounded ${getMetricColors('irr', metrics.irr).text}`}>
                   {getHealthIcon('irr', metrics.irr)}
                 </div>
@@ -803,41 +938,17 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   {metrics.annualROI.toFixed(1)}%
                 </div>
                 <div className="text-sm text-gray-600">Annual ROI (Year 1)</div>
+                <div className="mt-1 text-xs text-gray-600">
+                  <span className="font-medium">Health:</span> {getHealthLabel('annualRoi', metrics.annualROI)}
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">Benchmark (Dubai):</span> {dubaiBenchmarks.annualRoi}
+                </div>
                 <div className={`absolute bottom-2 right-2 text-base px-2 py-1 rounded ${getMetricColors('annualRoi', metrics.annualROI).text}`}>
                   {getHealthIcon('annualRoi', metrics.annualROI)}
                 </div>
               </div>
 
-              {/* Total ROI (X Years) */}
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">Period:</span>
-                  <select 
-                    className="text-sm border rounded px-2 py-1 bg-white"
-                    value={roiYears}
-                    onChange={(e) => setRoiYears(parseInt(e.target.value))}
-                  >
-                    <option value={3}>3Y</option>
-                    <option value={5}>5Y</option>
-                    <option value={7}>7Y</option>
-                  </select>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-4 w-4 text-gray-400" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm">
-                        <p><strong>Total ROI ({roiYears} Years)</strong></p>
-                        <p>Cumulative return over the selected period including cash flow and capital appreciation (based on IRR).</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <div className="text-2xl font-bold text-purple-600 mb-1">
-                  {totalROI.toFixed(1)}%
-                </div>
-                <div className="text-sm text-gray-600">Total ROI ({roiYears} Years)</div>
-              </div>
+              {/* Total ROI card removed per request */}
 
               {/* Gross Yield */}
               <div className={`${getMetricColors('grossYield', metrics.grossYield).bg} border rounded-xl p-4 relative`}>
@@ -870,6 +981,11 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   {metrics.grossYield.toFixed(1)}%
                 </div>
                 <div className="text-sm text-gray-600">Gross Yield</div>
+                <div className="mt-1 text-xs text-gray-600">
+                  <span className="font-medium">Health:</span> {getHealthLabel('grossYield', metrics.grossYield)}
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">Benchmark (Dubai):</span> {dubaiBenchmarks.grossYield}
+                </div>
                 <div className={`absolute bottom-2 right-2 text-base px-2 py-1 rounded ${getMetricColors('grossYield', metrics.grossYield).text}`}>
                   {getHealthIcon('grossYield', metrics.grossYield)}
                 </div>
@@ -906,6 +1022,11 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
                   {metrics.netYield.toFixed(1)}%
                 </div>
                 <div className="text-sm text-gray-600">Net Yield</div>
+                <div className="mt-1 text-xs text-gray-600">
+                  <span className="font-medium">Health:</span> {getHealthLabel('netYield', metrics.netYield)}
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">Benchmark (Dubai):</span> {dubaiBenchmarks.netYield}
+                </div>
                 <div className={`absolute bottom-2 right-2 text-base px-2 py-1 rounded ${getMetricColors('netYield', metrics.netYield).text}`}>
                   {getHealthIcon('netYield', metrics.netYield)}
                 </div>
@@ -1129,6 +1250,86 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
           </Card>
         </div>
 
+        {/* Outlook */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🔭</span>
+              <CardTitle>Outlook</CardTitle>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button aria-label="About Outlook" className="text-gray-400 hover:text-gray-700">
+                    <Info className="h-4 w-4" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Outlook — Methodology</DialogTitle>
+                    <DialogDescription>Formulas used for break‑even, target rent, payback time and exit preview</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-3 text-sm">
+                    <div className="p-3 rounded-lg bg-blue-50">
+                      <div className="font-semibold text-blue-700 mb-1">Break‑even rent</div>
+                      <p>Effective rent where monthly cash flow = 0.</p>
+                      <p className="text-xs text-slate-600 mt-1">E<sub>be</sub> = (mortgage + base fee + maintenance + insurance + other) ÷ (1 − management%) • Gross rent = E<sub>be</sub> ÷ (1 − vacancy)</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-green-50">
+                      <div className="font-semibold text-green-700 mb-1">Target rent</div>
+                      <p>Rent to hit the chosen net‑yield on price.</p>
+                      <p className="text-xs text-slate-600 mt-1">NOI target = price × target net‑yield ÷ 12 • E<sub>target</sub> = (NOI target + fixed ops) ÷ (1 − management%) • Gross rent = E<sub>target</sub> ÷ (1 − vacancy)</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-emerald-50">
+                      <div className="font-semibold text-emerald-700 mb-1">Payback time</div>
+                      <p>Years of cash flow to recover initial cash.</p>
+                      <p className="text-xs text-slate-600 mt-1">payback = total investment ÷ (monthly cash flow × 12)</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-50">
+                      <div className="font-semibold text-purple-700 mb-1">Exit preview (3/5/7y)</div>
+                      <p>Net proceeds and equity multiple at sale.</p>
+                      <p className="text-xs text-slate-600 mt-1">sale price = price × (1 + appreciation%)^years • net proceeds = sale × (1 − selling costs%) − remaining loan • equity multiple = (net proceeds + cumulative cash flow) ÷ total investment</p>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            {/* Subtitle removed per request */}
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Break-even & Target Rent */}
+              <div className="p-4 rounded-xl border bg-white">
+                <div className="text-sm text-gray-600 mb-1">Break-even rent</div>
+                <div className="text-xl font-bold text-slate-800">AED {Math.round(breakEvenGrossRent).toLocaleString()}</div>
+                <div className="mt-3 text-sm text-gray-600">Target rent</div>
+                <div className="text-lg font-semibold text-blue-700">AED {Math.round(recommendedGrossRent).toLocaleString()}</div>
+                <div className="mt-2 text-xs text-gray-500">Rent where cash flow is zero and rent to hit your target net yield</div>
+              </div>
+
+              {/* Payback Time */}
+              <div className="p-4 rounded-xl border bg-white">
+                <div className="text-sm text-gray-600 mb-1">Payback time</div>
+                <div className="text-xl font-bold text-slate-800">{paybackYears ? `${paybackYears.toFixed(1)} years` : 'N/A'}</div>
+                <div className="mt-2 text-xs text-gray-500">Years of cash flow needed to recover your initial cash</div>
+              </div>
+
+              {/* Mini Exit Preview */}
+              <div className="p-4 rounded-xl border bg-white">
+                <div className="text-sm text-gray-600 mb-2">Exit preview (Net proceeds)</div>
+                <div className="flex items-center justify-between text-sm">
+                  {outlookPreviews.map(p => (
+                    <div key={p.years} className="text-center">
+                      <div className="text-xs text-gray-500">{p.years}y</div>
+                      <div className="font-semibold">{formatAED(p.net)}</div>
+                      <div className="text-xs text-gray-500">{p.em.toFixed(2)}x</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 text-xs text-gray-500">Net proceeds at exit and simple equity multiple</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Rental Price Recommendation */}
         <Card>
           <CardHeader>
@@ -1172,18 +1373,20 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div className="bg-green-50 border border-green-200 rounded-xl p-4 order-2 md:order-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                </div>
-                <div className="text-2xl font-bold text-green-600 mb-1">
+                <div className={`text-2xl font-bold mb-1 ${((propertyData.monthlyRent + propertyData.additionalIncome) > recommendedGrossRent) ? 'text-green-600' : 'text-orange-600'}`}>
                   AED {(propertyData.monthlyRent + propertyData.additionalIncome).toLocaleString()}
                 </div>
-                <div className="font-medium text-green-600 mb-2">Current Rent</div>
+                <div className={`font-medium mb-2 ${((propertyData.monthlyRent + propertyData.additionalIncome) > recommendedGrossRent) ? 'text-green-600' : 'text-orange-600'}`}>Current Rent</div>
                 <div className="text-sm space-y-1">
                   <div>{currentNetYieldOnPrice.toFixed(1)}% net yield (on price)</div>
-                  <div className="text-green-600 font-medium">
+                  <div className={`${((propertyData.monthlyRent + propertyData.additionalIncome) > recommendedGrossRent) ? 'text-green-600' : 'text-orange-600'} font-medium`}>
                     {(propertyData.monthlyRent + propertyData.additionalIncome) > recommendedGrossRent ? 'Above recommended' : 'Below recommended'}
                   </div>
+                  {((propertyData.monthlyRent + propertyData.additionalIncome) <= recommendedGrossRent) && (
+                    <div className="text-xs text-gray-600">
+                      To reach target net yield of {targetNetYield}%, aim for AED {Math.round(recommendedGrossRent).toLocaleString()} per month.
+                    </div>
+                  )}
                   <div className="text-xs text-gray-500">Entered by user</div>
                 </div>
               </div>
@@ -1230,124 +1433,7 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
           </CardContent>
         </Card>
 
-        {/* Exit Strategy */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🚪</span>
-              <CardTitle>Exit Strategy</CardTitle>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info className="h-4 w-4 text-gray-400" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-sm">
-                    <p>Exit scenario for the selected period ({roiYears} years): net proceeds, IRR, and equity multiple based on your current assumptions.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <div className="ml-auto flex items-center gap-2">
-                <span className="text-xs text-gray-500">Period</span>
-                <select 
-                  className="text-xs border rounded px-2 py-1 bg-white"
-                  value={roiYears}
-                  onChange={(e) => setRoiYears(parseInt(e.target.value))}
-                >
-                  <option value={3}>3Y</option>
-                  <option value={5}>5Y</option>
-                  <option value={7}>7Y</option>
-                </select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-green-50 border border-green-200">
-                <div className="text-xs text-green-700">Net Proceeds at Exit</div>
-                <div className="text-2xl font-bold text-green-700">{formatAED(exitNetProceeds)}</div>
-              </div>
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
-                <div className="text-xs text-blue-700">IRR ({roiYears} Years)</div>
-                <div className="text-2xl font-bold text-blue-700">{exitIrr.toFixed(1)}%</div>
-              </div>
-              <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
-                <div className="text-xs text-purple-700">Equity Multiple</div>
-                <div className="text-2xl font-bold text-purple-700">{exitEquityMultiple.toFixed(2)}x</div>
-              </div>
-            </div>
-
-            {/* Distribution bar */}
-            <div className="mt-4">
-              <div className="text-xs text-gray-600 mb-1">Distribution at Exit</div>
-              <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden flex">
-                {(() => {
-                  const total = Math.max(1, exitSalePrice);
-                  const pCosts = (exitSellingCosts / total) * 100;
-                  const pLoan = (exitRemainingLoan / total) * 100;
-                  const pNet = Math.max(0, 100 - pCosts - pLoan);
-                  return (
-                    <>
-                      <div style={{ width: `${pCosts}%` }} className="bg-amber-400" />
-                      <div style={{ width: `${pLoan}%` }} className="bg-blue-400" />
-                      <div style={{ width: `${pNet}%` }} className="bg-green-500" />
-                    </>
-                  );
-                })()}
-              </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>Costs</span>
-                <span>Remaining Loan</span>
-                <span>Net Proceeds</span>
-              </div>
-            </div>
-
-            {/* 3/5/7 comparison */}
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-600">
-                    <th className="py-2 font-medium">Years</th>
-                    <th className="py-2 font-medium">Sale price</th>
-                    <th className="py-2 font-medium">Net proceeds</th>
-                    <th className="py-2 font-medium">IRR</th>
-                    <th className="py-2 font-medium">Equity multiple</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {exitRows.map(r => (
-                    <tr key={r.h} className="border-t">
-                      <td className="py-2">{r.h} Years</td>
-                      <td className="py-2">{formatAED(r.sale)}</td>
-                      <td className="py-2">{formatAED(r.net)}</td>
-                      <td className="py-2">{r.irr.toFixed(1)}%</td>
-                      <td className="py-2">{r.em.toFixed(2)}x</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="mt-4">Details</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>Exit Details ({roiYears} Years)</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between"><span>Sale price</span><span>{formatAED(exitSalePrice)}</span></div>
-                  <div className="flex justify-between"><span>Selling costs</span><span>{formatAED(exitSellingCosts)}</span></div>
-                  <div className="flex justify-between"><span>Remaining loan</span><span>{formatAED(exitRemainingLoan)}</span></div>
-                  <div className="flex justify-between"><span>Net proceeds</span><span className="font-semibold">{formatAED(exitNetProceeds)}</span></div>
-                  <div className="flex justify-between"><span>Cumulative cash flow</span><span>{formatAED(exitCumCashFlow)}</span></div>
-                  <div className="flex justify-between"><span>Total profit vs cash invested</span><span className="font-semibold">{formatAED(exitTotalProfit)}</span></div>
-                  <div className="flex justify-between"><span>Break-even sale price</span><span>{formatAED(breakEvenSalePrice)}</span></div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
+        {/* Exit Strategy removed per request */}
 
         {/* Investment Score */}
         <Card className="bg-gradient-to-br from-blue-600 to-blue-800 text-white">
@@ -1356,211 +1442,89 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🎯</span>
                 <div>
-                  <h2 className="text-2xl font-bold">Deal Score</h2>
-                  <p className="text-blue-100 text-sm">Comprehensive investment analysis</p>
+                  <h2 className="text-2xl font-bold">Investment Grade</h2>
+                  <div className="flex items-center gap-2">
+                    <p className="text-blue-100 text-sm">Comprehensive deal assessment</p>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button aria-label="About Investment Grade" className="text-blue-200 hover:text-white">
+                          <Info className="h-4 w-4" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle>Investment Grade — Methodology</DialogTitle>
+                          <DialogDescription>How we calculate the letter grade and points</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-3 text-sm">
+                          <div className="p-4 rounded-lg bg-blue-50">
+                            <div className="font-semibold text-blue-700 mb-1">What it means</div>
+                            <p>Your grade (A+–F) comes from a 0–100 score across five weighted pillars.</p>
+                          </div>
+                          <div className="p-4 rounded-lg bg-green-50">
+                            <div className="font-semibold text-green-700 mb-2">How points are awarded</div>
+                            <ul className="space-y-1">
+                              <li><strong>Return on Investment (30)</strong>: 12%+: 30 • 8–11.9%: 24 • 5–7.9%: 18 • 2–4.9%: 12 • &lt;2%: 6</li>
+                              <li><strong>Monthly Cash Flow (25)</strong>: ≥1,500 AED: 25 • ≥1,000: 20 • ≥500: 15 • ≥100: 10 • ≥0: 5 • negative: 0</li>
+                              <li><strong>Net Yield (20)</strong>: ≥7%: 20 • ≥5%: 16 • ≥3%: 12 • ≥1%: 8 • &lt;1%: 4</li>
+                              <li><strong>Cost Management (15)</strong> (expense ratio): ≤60%: 15 • ≤70%: 12 • ≤80%: 9 • ≤90%: 6 • &gt;90%: 3</li>
+                              <li><strong>Financial Health (10)</strong> (DSCR): ≥1.40: 10 • ≥1.25: 8 • ≥1.10: 6 • ≥1.00: 4 • &lt;1.00: 2</li>
+                            </ul>
+                          </div>
+                          <div className="p-4 rounded-lg bg-emerald-50">
+                            <div className="font-semibold text-emerald-700 mb-1">From score to grade</div>
+                            <p>A+: 90–100 • A: 85–89 • A‑: 80–84 • B+: 75–79 • B: 70–74 • B‑: 65–69 • C+: 60–64 • C: 55–59 • C‑: 50–54 • D: 40–49 • F: &lt;40</p>
+                          </div>
+                          <div className="text-xs text-slate-600">Tip: Improve the lowest-scoring pillar first for the quickest grade uplift.</div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
               </div>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className="h-6 w-6 text-blue-200 hover:text-white" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-md" side="left">
-                    <div className="space-y-2">
-                      <p><strong>Investment Score Methodology</strong></p>
-                      <p>• <strong>Cash Flow (4 pts):</strong> Monthly income and cash-on-cash return</p>
-                      <p>• <strong>Yield (3 pts):</strong> Gross and net rental yields</p>
-                      <p>• <strong>Risk (2 pts):</strong> Debt ratios and expense management</p>
-                      <p>• <strong>Growth (1 pt):</strong> Capital appreciation potential</p>
-                      <p className="text-xs text-gray-400 mt-2">Score: 8-10 = Excellent, 6-7 = Good, 4-5 = Fair, 0-3 = Poor</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
 
             <div className="mb-8">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="text-7xl font-bold">{metrics.investmentScore}/10</div>
-                <div className="flex items-center gap-2">
-                  <Badge className={`${metrics.riskLevel === 'Low Risk' ? 'bg-green-500' : metrics.riskLevel === 'Medium Risk' ? 'bg-yellow-500' : 'bg-red-500'} text-white px-3 py-1 text-lg`}>
-                    {metrics.riskLevel}
-                  </Badge>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-5 w-5 text-blue-100 hover:text-white" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm text-sm space-y-2">
-                        <div>
-                          <span className="font-semibold">Low Risk</span> – typically DSCR ≥ 1.5, expense ratio &lt; 30%, LTV ≤ 60–70. Strong cash flow resilience. Good for conservative buyers and agents advising yield‑focused clients.
+              {(() => {
+                const report = calculateInvestmentGradeReport(metrics);
+                const gi = INVESTMENT_GRADES[report.letter];
+                return (
+                  <div className="text-center">
+                    <div className="text-7xl font-extrabold" style={{ color: gi.color }}>{report.letter}</div>
+                    <div className="text-xl font-semibold mt-1">{gi.label}</div>
+                    {/* risk line removed */}
+                    <div className="mt-3 inline-block bg-white/10 rounded-lg px-4 py-2">
+                      <div className="text-xs text-blue-100">Overall Score</div>
+                      <div className="text-2xl font-bold text-white">{report.totalScore}/100</div>
                         </div>
-                        <div>
-                          <span className="font-semibold">Medium Risk</span> – DSCR 1.2–1.5, expenses 30–50%, LTV 60–80. Balanced leverage and returns. Suitable for investors targeting growth with manageable risk.
+                    <div className="mt-3 text-sm text-blue-100">{getRecommendationText(report.letter)}</div>
+                    <div className="mt-1 text-xs text-blue-100/90">Notes: {getAgentNotes(metrics)}</div>
                         </div>
-                        <div>
-                          <span className="font-semibold">High Risk</span> – DSCR &lt; 1.2 or expenses &gt; 50% or LTV &gt; 80. Sensitive to rate/rent changes; may require value‑add strategy or higher tolerance.
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </div>
+                );
+              })()}
             </div>
             
             <div className="bg-white/10 rounded-lg p-6 mb-6">
-              <h3 className="font-semibold mb-6 text-xl">Score Breakdown</h3>
-              
+              <h3 className="font-semibold mb-6 text-xl">Investment Grade Breakdown</h3>
               <div className="space-y-6">
+                {(() => {
+                  const r = calculateInvestmentGradeReport(metrics);
+                  return r.breakdown.map((cat) => (
+                    <div key={cat.name}>
+                      <div className="flex justify-between items-center mb-2">
                 <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">💰</span>
-                      <span className="font-medium">Cash Flow</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="h-4 w-4 text-blue-200" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>Evaluates monthly cash flow and cash-on-cash return. Higher scores for positive cash flow and returns above 6%.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                          <div className="font-medium">{cat.name}</div>
+                          <div className="text-xs text-blue-100">{cat.description}</div>
                     </div>
-                    <span className="font-bold">3/4 pts</span>
+                        <div className="text-right">
+                          <div className="font-bold">{cat.score}/{cat.maxScore}</div>
+                          <div className="text-xs text-blue-100">{cat.rating}</div>
                   </div>
-                  <Progress value={75} className="h-3 mb-3" />
-                  <div className="space-y-2">
-                    {metrics.monthlyCashFlow > 0 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Positive monthly cash flow</span>
                       </div>
-                    )}
-                    {metrics.cashOnCashReturn > 6 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Good cash-on-cash return (&gt;6%)</span>
+                      <Progress value={(cat.score / cat.maxScore) * 100} className="h-2" />
                       </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">📈</span>
-                      <span className="font-medium">Yield</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="h-4 w-4 text-blue-200" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>Measures rental yields. Points awarded for net yield &gt;5%, &gt;7%, and gross yield &gt;8%.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <span className="font-bold">3/3 pts</span>
-                  </div>
-                  <Progress value={100} className="h-3 mb-3" />
-                  <div className="space-y-2">
-                    {metrics.netYield > 5 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Good net yield (&gt;5%)</span>
-                      </div>
-                    )}
-                    {metrics.netYield > 7 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Excellent net yield (&gt;7%)</span>
-                      </div>
-                    )}
-                    {metrics.grossYield > 8 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Strong gross yield (&gt;8%)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">⚠️</span>
-                      <span className="font-medium">Risk</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="h-4 w-4 text-blue-200" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>Assesses financial risk through expense ratios. Lower expense ratios indicate better risk management.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <span className="font-bold">1/2 pts</span>
-                  </div>
-                  <Progress value={50} className="h-3 mb-3" />
-                  <div className="space-y-2">
-                    {metrics.dscr >= 1.5 ? (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Excellent debt service coverage</span>
-                      </div>
-                    ) : metrics.dscr >= 1.2 ? (
-                      <div className="flex items-center gap-2 text-sm">
-                        <AlertTriangle className="h-4 w-4 text-yellow-300" />
-                        <span>Adequate debt service coverage</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 text-sm">
-                        <AlertTriangle className="h-4 w-4 text-red-300" />
-                        <span>Low debt service coverage</span>
-                      </div>
-                    )}
-                    {metrics.monthlyExpenseRatio < 30 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Low expense ratio (&lt;30%)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🚀</span>
-                      <span className="font-medium">Growth</span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="h-4 w-4 text-blue-200" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-sm">
-                            <p>Evaluates capital appreciation potential. Points awarded for annual appreciation rates above 3%.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                    <span className="font-bold">1/1 pts</span>
-                  </div>
-                  <Progress value={100} className="h-3 mb-3" />
-                  <div className="space-y-2">
-                    {propertyData.appreciationRate > 3 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-300" />
-                        <span>Good appreciation potential (&gt;3%)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                  ));
+                })()}
               </div>
             </div>
 
@@ -1620,6 +1584,7 @@ const InvestmentDashboard: React.FC<InvestmentDashboardProps> = ({ propertyData 
             </div>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Floating Edit Inputs Button */}

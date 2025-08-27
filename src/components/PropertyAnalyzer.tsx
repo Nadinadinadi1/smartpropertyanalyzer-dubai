@@ -319,15 +319,15 @@ export default function PropertyAnalyzer({ onAnalyze, initialData }: PropertyAna
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
                   <div className="text-blue-700 text-sm font-semibold">📊 ROI Analysis</div>
-                  <p className="text-xs text-gray-600 mt-1">Calculate exact returns on your investment</p>
+                  <p className="text-xs text-gray-600 mt-1">Exact ROI and payback time</p>
                 </div>
                 <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
                   <div className="text-indigo-700 text-sm font-semibold">💰 Cash Flow</div>
-                  <p className="text-xs text-gray-600 mt-1">Monthly income vs. expenses breakdown</p>
+                  <p className="text-xs text-gray-600 mt-1">Monthly profit after all costs</p>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                  <div className="text-purple-700 text-sm font-semibold">📈 Growth Projections</div>
-                  <p className="text-xs text-gray-600 mt-1">1-10 year investment forecasts</p>
+                  <div className="text-purple-700 text-sm font-semibold">🎯 Investment Grade</div>
+                  <p className="text-xs text-gray-600 mt-1">A–F grade with weighted score</p>
                 </div>
               </div>
               
